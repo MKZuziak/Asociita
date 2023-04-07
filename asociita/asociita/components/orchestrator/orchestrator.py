@@ -46,3 +46,28 @@ class Orchestrator():
         
         if self.model != None:
             self.state = 0
+
+
+    def load_data(self, validation_data: list[tuple]) -> None:
+        """Loads the validation data that will be used by the Orchestrator.
+        In contrast to the client object, load_model and load_data are separated 
+        in the instance of the orchestrator class.
+        
+        Parameters
+        ----------
+        validation_data: list[tuple]
+            Validation dataset that will be used by the Orchestrator.
+        
+        Returns
+        ----------
+        None"""
+        assert self.state == 0, f"Object {self} is not resting, previous operation is still active."
+        self.state = 1
+        
+        try:
+            self.validation_data = validation_data
+        except:
+            logging.critical("Failed to load the data")
+        
+        if self.validation_data != None:
+            self.state = 0
