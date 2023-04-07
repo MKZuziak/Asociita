@@ -1,9 +1,13 @@
 [tool.poetry]
 name = "asociita"
 version = "0.1.0"
-description = ""
-authors = ["Scolpe <63779111+Scolpe@users.noreply.github.com>"]
+description = "An intuitive and modular simulator for assessing the marginal value of a client's contribution in a decentralized setting."
+authors = ["Maciej Zuziak <maciejkrzysztof.zuziak@isti.cnr.it>"]
+license = "MIT"
 readme = "README.md"
+homepage = "https://github.com/Scolpe/Asociita"
+repository = "https://github.com/Scolpe/Asociita"
+
 
 [tool.poetry.dependencies]
 python = "^3.10"
