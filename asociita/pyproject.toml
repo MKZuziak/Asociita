@@ -11,7 +11,8 @@ repository = "https://github.com/Scolpe/Asociita"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-
+torch = "^1.13.1"
+numpy = "^1.24.1"
 
 [build-system]
 requires = ["poetry-core"]
