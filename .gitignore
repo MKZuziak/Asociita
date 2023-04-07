@@ -128,3 +128,11 @@ dmypy.json
 # Pyre type checker
 .pyre/
 asociita/poetry.lock
+asociita/tests/orchestrator_tests/data/FashionMNIST/raw/t10k-images-idx3-ubyte
+asociita/tests/orchestrator_tests/data/FashionMNIST/raw/t10k-images-idx3-ubyte.gz
+asociita/tests/orchestrator_tests/data/FashionMNIST/raw/t10k-labels-idx1-ubyte
+asociita/tests/orchestrator_tests/data/FashionMNIST/raw/t10k-labels-idx1-ubyte.gz
+asociita/tests/orchestrator_tests/data/FashionMNIST/raw/train-images-idx3-ubyte
+asociita/tests/orchestrator_tests/data/FashionMNIST/raw/train-images-idx3-ubyte.gz
+asociita/tests/orchestrator_tests/data/FashionMNIST/raw/train-labels-idx1-ubyte
+asociita/tests/orchestrator_tests/data/FashionMNIST/raw/train-labels-idx1-ubyte.gz
