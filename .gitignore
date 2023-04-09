@@ -137,3 +137,11 @@ asociita/tests/orchestrator_tests/data/FashionMNIST/raw/train-images-idx3-ubyte.
 asociita/tests/orchestrator_tests/data/FashionMNIST/raw/train-labels-idx1-ubyte
 asociita/tests/orchestrator_tests/data/FashionMNIST/raw/train-labels-idx1-ubyte.gz
 main_script.py
+tests/orchestrator_tests/data/FashionMNIST/raw/t10k-images-idx3-ubyte
+tests/orchestrator_tests/data/FashionMNIST/raw/t10k-images-idx3-ubyte.gz
+tests/orchestrator_tests/data/FashionMNIST/raw/t10k-labels-idx1-ubyte
+tests/orchestrator_tests/data/FashionMNIST/raw/t10k-labels-idx1-ubyte.gz
+tests/orchestrator_tests/data/FashionMNIST/raw/train-images-idx3-ubyte
+tests/orchestrator_tests/data/FashionMNIST/raw/train-images-idx3-ubyte.gz
+tests/orchestrator_tests/data/FashionMNIST/raw/train-labels-idx1-ubyte
+tests/orchestrator_tests/data/FashionMNIST/raw/train-labels-idx1-ubyte.gz
