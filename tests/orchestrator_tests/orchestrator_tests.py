@@ -1,8 +1,16 @@
+# A workaround for import error
+import sys, os
+from pathlib import Path
+import unittest
+import logging
+p = Path(__file__).parents[2]
+p = os.path.join(p, 'asociita')
+sys.path.insert(0, p)
+
+
 from asociita.components.orchestrator.orchestrator import Orchestrator
 from asociita.models.pytorch.mnist import MnistNet
 from asociita.datasets.pytorch.fetch_data import load_mnist
-import unittest
-
 class Orchestrator_tests(unittest.TestCase):
 
     def init_test(self):
