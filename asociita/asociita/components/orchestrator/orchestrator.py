@@ -1,4 +1,4 @@
-import types, logging
+import types, logging, datasets
 from typing import Any
 
 class Orchestrator():
@@ -20,9 +20,9 @@ class Orchestrator():
                          # 1 - initialized, in run-time
         
         self.settings = settings # Settings attribute (dict)
-
         self.state = 0
     
+
     def load_model(self, model: Any) -> None:
         """Loads the global model that will be used as the orchestrator's main model
         In contrast to the client object, load_model and load_data are separated in the
@@ -48,14 +48,14 @@ class Orchestrator():
             self.state = 0
 
 
-    def load_data(self, validation_data: list[tuple]) -> None:
+    def load_data(self, validation_data: datasets.arrow_dataset.Dataset) -> None:
         """Loads the validation data that will be used by the Orchestrator.
         In contrast to the client object, load_model and load_data are separated 
         in the instance of the orchestrator class.
         
         Parameters
         ----------
-        validation_data: list[tuple]
+        validation_data: datasets.arrow_dataset.Dataset
             Validation dataset that will be used by the Orchestrator.
         
         Returns
