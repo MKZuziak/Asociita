@@ -1,5 +1,47 @@
-import types, logging, datasets
+import types, logging, datasets, multiprocess, copy
 from typing import Any
+from asociita.components.nodes.federated_node import FederatedNode
+from multiprocessing import Pool, Manager
+
+
+def prepare_nodes(node: FederatedNode, 
+                 model: Any,
+                 dataset: list[datasets.arrow_dataset.Dataset, 
+                               datasets.arrow_dataset.Dataset],
+                               query) -> str:
+    """Used to connect the node and prepare it for training.
+    Updates instances of a FederatedNode object and
+    puts it into communication_queue.
+    
+    -------------
+    Args:
+        node (int): ID of the node that we want to connect.
+        model (Any): Compiled or pre-compiled model to be trained.
+        dataset (list[datasets.arrow_dataset.Dataset, 
+                datasets.arrow_dataset.Dataset]): A dataset in the
+                format ["train_data", "test_data"] that will be used 
+                by the selected node.
+        comunication_queue (multiprocess.Manager.Queue): Communication queue.
+    -------------
+    Returns:
+        message(str): "OK" """
+    node.prepare_node(model=model, data=dataset)
+    query.put(node)
+    return "OK"
+
+
+def create_nodes(node_id: int) -> list[FederatedNode]: 
+    """Creates a list of nodes that will be connected to the 
+    orchestrator and contained in a list[FederatedNode] container.
+    -------------
+    Args:
+        node (int): ID of the node that we want to connect.
+    -------------
+    Returns:
+        list[FederatedNode]: List of nodes that were created.
+    """
+    nodes = [FederatedNode(id) for id in node_id]
+    return nodes
 
 class Orchestrator():
     def __init__(self, settings: dict) -> None:
@@ -71,3 +113,53 @@ class Orchestrator():
         
         if self.validation_data != None:
             self.state = 0
+    
+
+    def training_protocol(self,
+                          nodes_data: list[datasets.arrow_dataset.Dataset, 
+                               datasets.arrow_dataset.Dataset]):
+        
+        # Defining the settings
+        iterations = self.settings['iterations']
+        nodes_number = self.settings['number_of_nodes']
+        local_warm_start = self.settings["local_warm_start"]
+        nodes = self.settings["nodes"]
+        
+
+        # Creating a list containing nodes, i.e. FederatedNode objects.
+        av_nodes = create_nodes(nodes)
+
+
+        # Creating a multiprocess manager and communication queue.
+        #manager = multiprocess.Manager()
+        #communication_queue = manager.Queue()
+
+
+        # Copying the the local model n times or initiating with local warm start.
+        if local_warm_start == True:
+            raise("Beginning the training with different local models not implemented yet.")
+        else:
+            model_list = [copy.deepcopy(self.model) for _ in range(nodes_number)]
+        
+        # create the manager
+        with Manager() as manager:
+            # create the shared queue
+            queue = manager.Queue()
+            # create the pool of workers
+            with Pool(nodes_number) as pool:
+                args = [(node, model, dataset) for 
+                        node, model, dataset in zip(av_nodes, model_list, nodes_data)]
+                results = [
+                    pool.apply_async(prepare_nodes, (node, model, dataset, queue))
+                    for node, model, dataset in zip(av_nodes, model_list, nodes_data)
+                ]
+                for result in results:
+                    nodes_green = []
+                    _ = result.get()
+                    updated_node = queue.get()
+                    if updated_node.state == 0:
+                        logging.info(f"Node {updated_node.node_id} was updated successfully.")
+                        nodes_green.append(updated_node)
+                    else:
+                        logging.warning(f"Node {updated_node.node_id} failed during the update.")
+                    
