@@ -145,11 +145,6 @@ class Orchestrator():
         av_nodes = create_nodes(nodes)
 
 
-        # Creating a multiprocess manager and communication queue.
-        #manager = multiprocess.Manager()
-        #communication_queue = manager.Queue()
-
-
         # Copying the the local model n times or initiating with local warm start.
         if local_warm_start == True:
             raise("Beginning the training with different local models not implemented yet.")
@@ -160,18 +155,23 @@ class Orchestrator():
         with Manager() as manager:
             # create the shared queue
             queue = manager.Queue()
+            
+            
             # create the pool of workers
             with Pool(nodes_number) as pool:
-                args = [(node, model, dataset) for 
-                        node, model, dataset in zip(av_nodes, model_list, nodes_data)]
+                # asynchronously apply the function
                 results = [
                     pool.apply_async(prepare_nodes, (node, model, dataset, queue))
                     for node, model, dataset in zip(av_nodes, model_list, nodes_data)
                 ]
+                # consume the results
                 for result in results:
+                    # Define a list of healthy nodes
                     nodes_green = []
+                    # query for results
                     _ = result.get()
                     updated_node = queue.get()
+                    # Adds to list only if the node is healthy
                     if check_health(updated_node):
                         nodes_green.append(updated_node)
                     
