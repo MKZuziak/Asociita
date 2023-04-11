@@ -43,6 +43,21 @@ def create_nodes(node_id: int) -> list[FederatedNode]:
     nodes = [FederatedNode(id) for id in node_id]
     return nodes
 
+
+def check_health(node: FederatedNode) -> int:
+    """Checks whether node has successfully conducted the transaction
+    and can be moved to the next phase of the training. According to the
+    adopted standard - if node.state == 0, node is ready for the next
+    transaction. On the contrary, if node.state == 1, then node must be 
+    excluded from the simulation (internal error)."""
+    if node.state == 0:
+        logging.warning(f"Node {node.node_id} was updated successfully.")
+        return True
+    else:
+        logging.warning(f"Node {node.node_id} failed during the update.")
+        return False
+
+
 class Orchestrator():
     def __init__(self, settings: dict) -> None:
         """Orchestrator is a central object necessary for performing the simulation.
@@ -157,9 +172,6 @@ class Orchestrator():
                     nodes_green = []
                     _ = result.get()
                     updated_node = queue.get()
-                    if updated_node.state == 0:
-                        logging.info(f"Node {updated_node.node_id} was updated successfully.")
+                    if check_health(updated_node):
                         nodes_green.append(updated_node)
-                    else:
-                        logging.warning(f"Node {updated_node.node_id} failed during the update.")
                     
