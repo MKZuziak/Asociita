@@ -28,7 +28,8 @@ class PyTorch_Tests(unittest.TestCase):
 
         federated_model = FederatedModel(settings=settings_node,
                                          local_dataset=data,
-                                         net=model)
+                                         net=model,
+                                         node_name=0)
         print(federated_model.trainloader)
         print(federated_model.testloader)
         

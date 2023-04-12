@@ -1,5 +1,5 @@
 # Libraries imports
-import sys, warnings, torch, gc
+import sys, warnings, torch, gc, logging
 import numpy as np
 from datasets import arrow_dataset
 # Modules imports
@@ -20,12 +20,21 @@ class FederatedModel:
         self,
         settings: dict,
         net: nn.Module,
-        local_dataset: list
+        local_dataset: list[arrow_dataset.Dataset, arrow_dataset.Dataset] |
+                                list[arrow_dataset.Dataset],
+        node_name: int
     ) -> None:
         """Initialize the Federated Model. This model will be attached to a 
         specific client and will wait for further instructions.
+        -------------
         Args:
             settings (dict): Settings for this run.
+            net (nn.Module): Neural Network architecture that we want to use.
+            local_dataset (list[...]): local dataset that will be used with this set.
+            node_name (int): identifier for the node that uses this container.
+        -------------
+        Returns:
+            None
         """
         self.device = None
         self.optimizer: optim.Optimizer = None
@@ -48,6 +57,7 @@ class FederatedModel:
         
         self.net = net
         self.settings = settings
+        self.node_name = node_name
         # If both, train and test data were provided
         if len(local_dataset) == 2:
             self.trainloader, self.testloader = self.prepare_data(local_dataset)
@@ -68,29 +78,35 @@ class FederatedModel:
         if self.settings['optimizer'] == "Adam":
             raise "Using Adam Optimizer has not been implemented yet."
             # TODO #self.optimizer = torch.optim.Adam(...
-        if self.settings['optimizer'] == "SGD":
+        elif self.settings['optimizer'] == "SGD":
             raise "Using SGD Optimizer has not been implemented yet."
             #TODO # self.optimizer = torch.optim.SGD(...
-        if self.settings['optimizer'] == "RMS":
+        elif self.settings['optimizer'] == "RMS":
             self.optimizer = optim.RMSprop(
                 params_to_update,
-                lr=self.settings["learning_rate"],
-            )    
+                lr=self.settings["learning_rate"],)
+        else:
+            raise "The provided optimizer name may be incorrect or not implemeneted.\
+            Please provide list[train_set, test_set] or list[test_set]"
 
 
     def prepare_data(
         self,
-        local_dataset = list,
-        only_test = False
+        local_dataset: list[arrow_dataset.Dataset, arrow_dataset.Dataset] |
+                                list[arrow_dataset.Dataset],
+        only_test: bool = False
     ) -> tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]:
         """Convert training and test data stored on the local client into
         torch.utils.data.DataLoader.
+        Args:
+        -------------
+        local_dataset (list[...]: local dataset that should be loaded into DataLoader)
+        only_test (bool, default to False): If true, only a test set will be returned
         Returns
-        -------
+        -------------
             Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]: training and test set
-        Raises
-        ------
-            Exception: Preference is not initialized
+            or
+            Tuple[torch.utils.data.DataLoader]: test set, if only_test == True.
         """
         if only_test == False:
             batch_size = self.settings["batch_size"]
@@ -107,7 +123,7 @@ class FederatedModel:
                 shuffle=False,
                 num_workers=0,
             )
-            #self.print_data_stats(trainloader)
+            #self.print_data_stats(trainloader) #TODO
             return trainloader, testloader
         else:
             testloader = torch.utils.data.DataLoader(
@@ -118,7 +134,7 @@ class FederatedModel:
             )
             return testloader
 
-    def print_data_stats(self, trainloader: torch.utils.data.DataLoader) -> None:
+    def print_data_stats(self, trainloader: torch.utils.data.DataLoader) -> None: #TODO
         """Debug function used to print stats about the loaded datasets.
         Args:
             trainloader (torch.utils.data.DataLoader): training set
@@ -131,9 +147,9 @@ class FederatedModel:
         for _, data in enumerate(trainloader, 0):
             targets.append(data[1])
         targets = [item.item() for sublist in targets for item in sublist]
-        logger.info(f"{self.node_name}, {Counter(targets)}")
-        logger.info(f"Training set size: {num_examples['trainset']}")
-        logger.info(f"Test set size: {num_examples['testset']}")
+        logging.warning(f"{self.node_name}, {Counter(targets)}")
+        logging.info(f"Training set size: {num_examples['trainset']}")
+        logging.info(f"Test set size: {num_examples['testset']}")
 
     def get_weights_list(self) -> list[float]:
         """Get the parameters of the network.
