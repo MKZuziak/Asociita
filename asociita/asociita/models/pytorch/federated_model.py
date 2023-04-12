@@ -153,29 +153,25 @@ class FederatedModel:
 
     def get_weights_list(self) -> list[float]:
         """Get the parameters of the network.
-        Raises
-        ------
-            Exception: if the model is not initialized it raises an exception
+        Args
+        -------------
+            self
         Returns
-        -------
+        -------------
             List[float]: parameters of the network
         """
-        if self.net:
-            return [val.cpu().numpy() for _, val in self.net.state_dict().items()]
-        raise NotYetInitializedFederatedLearningError
+        return [val.cpu().numpy() for _, val in self.net.state_dict().items()]
 
     def get_weights(self):
         """Get the weights of the network.
         Raises
-        ------
+        -------------
             Exception: if the model is not initialized it raises an exception
         Returns
-        -------
+        -------------
             _type_: weights of the network
         """
-        if self.net:
-            return self.net.state_dict()
-        raise NotYetInitializedFederatedLearningError
+        return self.net.state_dict()
 
     def update_weights(self, avg_tensors) -> None:
         """This function updates the weights of the network.

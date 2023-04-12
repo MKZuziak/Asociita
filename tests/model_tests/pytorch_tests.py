@@ -1,6 +1,7 @@
 # A workaround for import error
 import sys, os
 from pathlib import Path
+from collections import OrderedDict
 import unittest
 import logging
 p = Path(__file__).parents[2]
@@ -26,16 +27,29 @@ class PyTorch_Tests(unittest.TestCase):
         data = load_data(settings=settings_data)
         model = MnistNet()
 
-        federated_model = FederatedModel(settings=settings_node,
+        self.federated_model = FederatedModel(settings=settings_node,
                                          local_dataset=data,
                                          net=model,
                                          node_name=0)
-        print(federated_model.trainloader)
-        print(federated_model.testloader)
-        
+        print(self.federated_model.trainloader)
+        print(self.federated_model.testloader)
+
+        self.assertIsNotNone(self.federated_model)
+        self.assertIsNotNone(self.federated_model.trainloader)
+        self.assertIsNotNone(self.federated_model.testloader)
+        self.assertEqual(0, self.federated_model.node_name)
         print("Initialization tests passed successfully")
+    
+
+    def test_get_weights(self):
+        weights = self.federated_model.get_weights_list()
+        self.assertIs(type(weights), list)
+        weights = self.federated_model.get_weights()
+        self.assertIs(type(weights), OrderedDict)
+        print("Weights has been received successfully")
 
 
 if __name__ == "__main__":
     test_instance = PyTorch_Tests()
     test_instance.test_init()
+    test_instance.test_get_weights()
