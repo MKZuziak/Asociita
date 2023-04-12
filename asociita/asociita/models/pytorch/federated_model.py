@@ -181,12 +181,9 @@ class FederatedModel:
         Args:
             avg_tensors (_type_): tensors that we want to use in the network
         """
-        if self.net:
-            self.net.load_state_dict(avg_tensors, strict=True)
-        else:
-            raise NotYetInitializedFederatedLearningError
+        self.net.load_state_dict(avg_tensors, strict=True)
 
-    def store_model_on_disk(self) -> None:
+    def store_model_on_disk(self) -> None: #TODO
         """This function is used to store the trained model
         on disk.
         Raises

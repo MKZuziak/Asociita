@@ -4,6 +4,7 @@ from pathlib import Path
 from collections import OrderedDict
 import unittest
 import logging
+import copy
 p = Path(__file__).parents[2]
 p = os.path.join(p, 'asociita')
 sys.path.insert(0, p)
@@ -47,9 +48,15 @@ class PyTorch_Tests(unittest.TestCase):
         weights = self.federated_model.get_weights()
         self.assertIs(type(weights), OrderedDict)
         print("Weights has been received successfully")
+    
+
+    def update_weights(self):
+        weights = self.federated_model.get_weights()
+        new_weights = copy.deepcopy(weights)
+        self.federated_model.update_weights(new_weights)
 
 
 if __name__ == "__main__":
     test_instance = PyTorch_Tests()
     test_instance.test_init()
-    test_instance.test_get_weights()
+    test_instance.update_weights()
