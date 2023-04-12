@@ -20,12 +20,13 @@ class PyTorch_Tests(unittest.TestCase):
         settings_data = {"dataset_name": 'mnist',
                          "split_type": "random_uniform",
                          "shards": 10,
-                         "local_test_size": 0.2,}
+                         "local_test_size": 0.5,}
         settings_node = {
             "optimizer": "RMS",
             "batch_size": 32,
-            "learning_rate": 0.1}
+            "learning_rate": 0.001}
         data = load_data(settings=settings_data)
+        data = data[1][1]
         model = MnistNet()
 
         self.federated_model = FederatedModel(settings=settings_node,
@@ -50,13 +51,25 @@ class PyTorch_Tests(unittest.TestCase):
         print("Weights has been received successfully")
     
 
-    def update_weights(self):
+    def test_update_weights(self):
         weights = self.federated_model.get_weights()
         new_weights = copy.deepcopy(weights)
         self.federated_model.update_weights(new_weights)
+        weights = self.federated_model.get_weights()
+        self.assertIs(type(weights), OrderedDict)
+        print("Weights has been updated successfully")
+    
+
+    def test_train(self):
+        for _ in range(20):
+            loss, acc = self.federated_model.train()
+            print(loss)
+            print(acc)
 
 
 if __name__ == "__main__":
     test_instance = PyTorch_Tests()
     test_instance.test_init()
-    test_instance.update_weights()
+    test_instance.test_get_weights()
+    test_instance.test_update_weights()
+    test_instance.test_train()
