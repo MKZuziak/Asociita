@@ -8,6 +8,7 @@ from typing import Any, Generic, Mapping, TypeVar, Union
 #from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score
 from torch import nn, optim
 from torchvision import transforms
+from sklearn.metrics import f1_score, recall_score, confusion_matrix, precision_score
 
 
 def transform_func(data):
@@ -260,3 +261,87 @@ class FederatedModel:
         logging.info(f"Training loss: {loss}, accuracy: {accuracy}")
 
         return loss, accuracy
+    
+
+    def evaluate_model(self) -> tuple[float, float, float, float, float, list]:
+        """Validate the network on the local test set.
+        Raises
+        ------
+            Exception: Raises an exception when Federated Learning is not initialized
+        Returns
+        -------
+            Tuple[float, float]: loss and accuracy on the test set.
+        """
+        with torch.no_grad():
+            if self.net:
+                self.net.eval()
+                criterion = nn.CrossEntropyLoss()
+                test_loss = 0
+                correct = 0
+                total = 0
+                y_pred = []
+                y_true = []
+                losses = []
+                with torch.no_grad():
+                    for _, dic in enumerate(self.trainloader):
+                        data = dic['image']
+                        target = dic['label']
+                        data, target = data.to(self.device), target.to(self.device)
+                        output = self.net(data)
+                        total += target.size(0)
+                        test_loss = criterion(output, target).item()
+                        losses.append(test_loss)
+                        pred = output.argmax(dim=1, keepdim=True)
+                        correct += pred.eq(target.view_as(pred)).sum().item()
+                        y_pred.append(pred)
+                        y_true.append(target)
+
+                test_loss = np.mean(losses)
+                accuracy = correct / total
+
+                y_true = [item.item() for sublist in y_true for item in sublist]
+                y_pred = [item.item() for sublist in y_pred for item in sublist]
+
+                f1score = f1_score(y_true, y_pred, average="macro")
+                precision = precision_score(y_true, y_pred, average="macro")
+                recall = recall_score(y_true, y_pred, average="macro")
+
+                cm = confusion_matrix(y_true, y_pred)
+                cm = cm.astype("float") / cm.sum(axis=1)[:, np.newaxis]
+                accuracy_per_class = cm.diagonal()
+
+                true_positives = np.diag(cm)
+                num_classes = len(list(set(y_true)))
+
+                false_positives = []
+                for i in range(num_classes):
+                    false_positives.append(sum(cm[:,i]) - cm[i,i])
+
+                false_negatives = []
+                for i in range(num_classes):
+                    false_negatives.append(sum(cm[i,:]) - cm[i,i])
+
+                true_negatives = []
+                for i in range(num_classes):
+                    temp = np.delete(cm, i, 0)   # delete ith row
+                    temp = np.delete(temp, i, 1)  # delete ith column
+                    true_negatives.append(sum(sum(temp)))
+
+                denominator = [sum(x) for x in zip(false_positives, true_negatives)]
+                false_positive_rate = [num/den for num, den in zip(false_positives, denominator)]
+
+                denominator = [sum(x) for x in zip(true_positives, false_negatives)]
+                true_positive_rate = [num/den for num, den in zip(true_positives, denominator)]
+
+                return (
+                    test_loss,
+                    accuracy,
+                    f1score,
+                    precision,
+                    recall,
+                    accuracy_per_class,
+                    true_positive_rate,
+                    false_positive_rate
+                )
+
+            raise 

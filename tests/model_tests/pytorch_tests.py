@@ -63,8 +63,8 @@ class PyTorch_Tests(unittest.TestCase):
     def test_train(self):
         for _ in range(20):
             loss, acc = self.federated_model.train()
-            print(loss)
-            print(acc)
+            metrics = self.federated_model.evaluate_model()
+            print(metrics)
 
 
 if __name__ == "__main__":
