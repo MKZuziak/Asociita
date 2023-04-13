@@ -7,6 +7,13 @@ from collections import Counter
 from typing import Any, Generic, Mapping, TypeVar, Union
 #from sklearn.metrics import confusion_matrix, f1_score, precision_score, recall_score
 from torch import nn, optim
+from torchvision import transforms
+
+
+def transform_func(data):
+    convert_tensor = transforms.ToTensor()
+    data["image"] = [convert_tensor(img) for img in data["image"]]
+    return data
 
 
 class FederatedModel:
@@ -109,6 +116,8 @@ class FederatedModel:
             Tuple[torch.utils.data.DataLoader]: test set, if only_test == True.
         """
         if only_test == False:
+            local_dataset[0] = local_dataset[0].with_transform(transform_func)
+            local_dataset[1] = local_dataset[1].with_transform(transform_func)
             batch_size = self.settings["batch_size"]
             trainloader = torch.utils.data.DataLoader(
                 local_dataset[0],
@@ -126,8 +135,9 @@ class FederatedModel:
             #self.print_data_stats(trainloader) #TODO
             return trainloader, testloader
         else:
+            local_dataset[0] = local_dataset[0].with_transform(transform_func)
             testloader = torch.utils.data.DataLoader(
-                local_dataset,
+                local_dataset[0],
                 batch_size=16,
                 shuffle=False,
                 num_workers=0,
@@ -207,46 +217,46 @@ class FederatedModel:
         -------
             Tuple[float, float]: Loss and accuracy on the training set.
         """
-        if self.net:
-            criterion = nn.CrossEntropyLoss()
-            running_loss = 0.0
-            total_correct = 0
-            total = 0
-            #self.net = self.net.to(self.device)
+        criterion = nn.CrossEntropyLoss()
+        running_loss = 0.0
+        total_correct = 0
+        total = 0
+        #self.net = self.net.to(self.device)
 
-            self.net.train()
-            for _, (data, target) in enumerate(self.trainloader, 0):
+        self.net.train()
+        for _, dic in enumerate(self.trainloader):
+            data = dic['image']
+            target = dic['label']
 
-                self.optimizer.zero_grad()
+            self.optimizer.zero_grad()
 
-                if isinstance(data, list):
-                    data = data[0]
+            if isinstance(data, list):
+                data = data[0]
 
-                #data, target = data.to(self.device), target.to(self.device)
-                # forward pass, backward pass and optimization
-                outputs = self.net(data)
-                _, predicted = torch.max(outputs.data, 1)
-                correct = (predicted == target).float().sum()
+            #data, target = data.to(self.device), target.to(self.device)
+            # forward pass, backward pass and optimization
+            outputs = self.net(data)
+            _, predicted = torch.max(outputs.data, 1)
+            correct = (predicted == target).float().sum()
 
-                loss = criterion(outputs, target)
-                running_loss += loss.item()
-                total_correct += correct
-                total += target.size(0)
+            loss = criterion(outputs, target)
+            running_loss += loss.item()
+            total_correct += correct
+            total += target.size(0)
 
-                self.optimizer.zero_grad()
-                self.net.zero_grad()
-                loss.backward()
-                self.optimizer.step()
-                self.optimizer.zero_grad()
-                self.net.zero_grad()
+            self.optimizer.zero_grad()
+            self.net.zero_grad()
+            loss.backward()
+            self.optimizer.step()
+            self.optimizer.zero_grad()
+            self.net.zero_grad()
         
-                if torch.cuda.is_available():
-                    torch.cuda.empty_cache()
+            if torch.cuda.is_available():
+                torch.cuda.empty_cache()
 
 
-            loss = running_loss / len(self.trainloader)
-            accuracy = total_correct / total
-            logger.info(f"Training loss: {loss}, accuracy: {accuracy}")
+        loss = running_loss / len(self.trainloader)
+        accuracy = total_correct / total
+        logging.info(f"Training loss: {loss}, accuracy: {accuracy}")
 
-            return loss, accuracy
-        raise NotYetInitializedFederatedLearningError
+        return loss, accuracy
