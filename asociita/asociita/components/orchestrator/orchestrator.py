@@ -3,6 +3,7 @@ from typing import Any, Tuple, List, Dict, AnyStr
 from asociita.components.nodes.federated_node import FederatedNode
 from asociita.models.pytorch.federated_model import FederatedModel
 from asociita.utils.computations import Aggregators
+from asociita.utils.handlers import Handler
 from multiprocessing import Pool, Manager
 
 
@@ -217,6 +218,10 @@ class Orchestrator():
                         node.model.update_weights(avg)
                     # Upadting the orchestrator
                     self.central_model.update_weights(avg)
+
+                    # Logging the metrics
+                    Handler.log_model_metrics(iteration=iteration,
+                        model = self.central_model)
         
         logging.critical("Training complete")
                     

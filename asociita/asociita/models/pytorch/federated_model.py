@@ -283,7 +283,7 @@ class FederatedModel:
                 y_true = []
                 losses = []
                 with torch.no_grad():
-                    for _, dic in enumerate(self.trainloader):
+                    for _, dic in enumerate(self.testloader):
                         data = dic['image']
                         target = dic['label']
                         data, target = data.to(self.device), target.to(self.device)
