@@ -2,6 +2,7 @@ import types, logging, datasets, multiprocess, copy, random
 from typing import Any, Tuple, List, Dict, AnyStr
 from asociita.components.nodes.federated_node import FederatedNode
 from asociita.models.pytorch.federated_model import FederatedModel
+from asociita.utils.computations import Aggregators
 from multiprocessing import Pool, Manager
 
 
@@ -210,12 +211,12 @@ class Orchestrator():
                         weights[node_id] = copy.deepcopy(model_weights)
                     
                     # Computing the average
-                    avg = Utils.compute_average(weights) #TODO: UTILS, COMPUTE_AVERAGE
+                    avg = Aggregators.compute_average(weights)
                     # Updating the nodes
                     for node in nodes_green:
                         node.model.update_weights(avg)
                     # Upadting the orchestrator
-                    self.model.update_weights(avg) #TODO
+                    self.central_model.update_weights(avg)
         
-        logging.info("Training complete")
+        logging.critical("Training complete")
                     
