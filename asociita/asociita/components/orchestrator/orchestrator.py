@@ -1,10 +1,14 @@
-import types, logging, datasets, multiprocess, copy, random
+import types, datasets, multiprocess, copy, random
 from typing import Any, Tuple, List, Dict, AnyStr
 from asociita.components.nodes.federated_node import FederatedNode
 from asociita.models.pytorch.federated_model import FederatedModel
 from asociita.utils.computations import Aggregators
 from asociita.utils.handlers import Handler
+from asociita.utils.loggers import Loggers
 from multiprocessing import Pool, Manager
+
+
+orchestrator_logger = Loggers.orchestrator_logger()
 
 
 def prepare_nodes(node: FederatedNode, 
@@ -60,10 +64,10 @@ def check_health(node: FederatedNode) -> bool:
     Returns:
         bool(): True if node is healthy, False otherwise."""
     if node.state == 0:
-        logging.warning(f"Node {node.node_id} was updated successfully.")
+        orchestrator_logger.warning(f"Node {node.node_id} was updated successfully.")
         return True
     else:
-        logging.warning(f"Node {node.node_id} failed during the update.")
+        orchestrator_logger.warning(f"Node {node.node_id} failed during the update.")
         return False
 
 
@@ -78,7 +82,7 @@ def sample_nodes(nodes: list[FederatedNode], sample_size: int) -> list[Federated
     Returns:
         list[FederatedNode]: List of sampled nodes."""
     if len(nodes) <= sample_size:
-        logging.warning("Sample size should be smaller than the size of the population, returning the original list")
+        orchestrator_logger.warning("Sample size should be smaller than the size of the population, returning the original list")
         return nodes
     else:
         sample = random.sample(nodes, sample_size)
@@ -206,7 +210,7 @@ class Orchestrator():
             # create the pool of workers
             with Pool(sample_size) as pool:
                 for iteration in range(iterations):
-                    logging.info(f"Iteration {iteration}")
+                    orchestrator_logger.info(f"Iteration {iteration}")
                     weights = {}
                     
                     # Sampling nodes and asynchronously apply the function
@@ -227,7 +231,8 @@ class Orchestrator():
 
                     # Logging the metrics
                     Handler.log_model_metrics(iteration=iteration,
-                        model = self.central_model)
+                        model = self.central_model,
+                        logger = orchestrator_logger)
         
-        logging.critical("Training complete")
+        orchestrator_logger.critical("Training complete")
                     

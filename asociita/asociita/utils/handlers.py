@@ -1,12 +1,14 @@
 from asociita.components.nodes.federated_node import FederatedNode
 import logging
+from typing import Any
 
 
 class Handler:
     """Common class for various utilities handling the data logs."""
     @staticmethod
     def log_model_metrics(iteration: int, 
-                          model
+                          model: Any,
+                          logger
                           ) -> None:
         """Used to log the model's metrics (on the orchestrator level).
         
@@ -34,6 +36,6 @@ class Handler:
                         "true_positive_rate": true_positive_rate,
                         "false_positive_rate": false_positive_rate,
                         "epoch": iteration}
-            logging.warning(metrics)
+            logger.warning(metrics)
         except Exception as e:
-            logging.warning(f"Unable to compute metrics. {e}")
+            logger.warning(f"Unable to compute metrics. {e}")

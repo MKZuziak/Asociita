@@ -1,8 +1,9 @@
 from typing import Any
 from datasets import arrow_dataset
-import logging
-
 from asociita.models.pytorch.federated_model import FederatedModel
+from asociita.utils.loggers import Loggers
+
+node_logger = Loggers.node_logger()
 
 class FederatedNode:
     def __init__(self, 
@@ -75,7 +76,7 @@ class FederatedNode:
         -------
             Tuple[List[float], List[float], List[float]]: _description_
         """
-        logging.info(f"Starting training on node {self.node_id}")
+        node_logger.info(f"Starting training on node {self.node_id}")
         loss_list: list[float] = []
         accuracy_list: list[float] = []
 
@@ -86,7 +87,7 @@ class FederatedNode:
             loss_list.append(metrics["loss"])
             accuracy_list.append(metrics["accuracy"])
         
-        logging.debug("2")
+        node_logger.debug(f"Results of training on node {self.node_id}: {accuracy_list}")
         return (
             self.node_id,
             self.model.get_weights()

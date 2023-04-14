@@ -1,5 +1,5 @@
 # Libraries imports
-import sys, warnings, torch, gc, logging
+import sys, warnings, torch, gc
 import numpy as np
 from datasets import arrow_dataset
 # Modules imports
@@ -9,6 +9,10 @@ from typing import Any, Generic, Mapping, TypeVar, Union
 from torch import nn, optim
 from torchvision import transforms
 from sklearn.metrics import f1_score, recall_score, confusion_matrix, precision_score
+
+from asociita.utils.loggers import Loggers
+
+model_logger = Loggers.model_logger()
 
 
 def transform_func(data):
@@ -158,9 +162,9 @@ class FederatedModel:
         for _, data in enumerate(trainloader, 0):
             targets.append(data[1])
         targets = [item.item() for sublist in targets for item in sublist]
-        logging.warning(f"{self.node_name}, {Counter(targets)}")
-        logging.info(f"Training set size: {num_examples['trainset']}")
-        logging.info(f"Test set size: {num_examples['testset']}")
+        model_logger.info(f"{self.node_name}, {Counter(targets)}")
+        model_logger.info(f"{self.node_name}: Training set size: {num_examples['trainset']}")
+        model_logger.info(f"{self.node_name}: Test set size: {num_examples['testset']}")
 
     def get_weights_list(self) -> list[float]:
         """Get the parameters of the network.
@@ -258,7 +262,7 @@ class FederatedModel:
 
         loss = running_loss / len(self.trainloader)
         accuracy = total_correct / total
-        logging.info(f"Training loss: {loss}, accuracy: {accuracy}")
+        model_logger.info(f"Training on {self.node_name} results: loss: {loss}, accuracy: {accuracy}")
 
         return loss, accuracy
     
