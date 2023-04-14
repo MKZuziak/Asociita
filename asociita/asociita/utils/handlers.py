@@ -8,7 +8,7 @@ class Handler:
     @staticmethod
     def log_model_metrics(iteration: int, 
                           model: Any,
-                          logger
+                          logger,
                           ) -> None:
         """Used to log the model's metrics (on the orchestrator level).
         
@@ -36,6 +36,6 @@ class Handler:
                         "true_positive_rate": true_positive_rate,
                         "false_positive_rate": false_positive_rate,
                         "epoch": iteration}
-            logger.warning(metrics)
+            logger.info(f"Evaluating model after iteration {iteration} on node {model.node_name}. Results: {metrics}")
         except Exception as e:
             logger.warning(f"Unable to compute metrics. {e}")

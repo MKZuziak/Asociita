@@ -215,7 +215,7 @@ class Orchestrator():
                     
                     # Sampling nodes and asynchronously apply the function
                     sampled_nodes = sample_nodes(nodes_green, sample_size=sample_size)
-                    results = [pool.apply_async(train_nodes, (node,)) for node in sampled_nodes] # TODO: TRAIN NODES
+                    results = [pool.apply_async(train_nodes, (node,)) for node in sampled_nodes]
                     # consume the results
                     for result in results:
                         node_id, model_weights = result.get()
@@ -233,6 +233,13 @@ class Orchestrator():
                     Handler.log_model_metrics(iteration=iteration,
                         model = self.central_model,
                         logger = orchestrator_logger)
+                    
+                    # Logging the metrics of sample or all nodes
+                    if self.settings['evaluation'] == "full":
+                        for node in nodes_green:
+                            Handler.log_model_metrics(iteration=iteration,
+                                model = node.model,
+                                logger = orchestrator_logger)
         
         orchestrator_logger.critical("Training complete")
                     
