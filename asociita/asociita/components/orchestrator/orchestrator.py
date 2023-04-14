@@ -47,12 +47,18 @@ def create_nodes(node_id: int, nodes_settings) -> list[FederatedNode]:
     return nodes
 
 
-def check_health(node: FederatedNode) -> int:
+def check_health(node: FederatedNode) -> bool:
     """Checks whether node has successfully conducted the transaction
     and can be moved to the next phase of the training. According to the
     adopted standard - if node.state == 0, node is ready for the next
     transaction. On the contrary, if node.state == 1, then node must be 
-    excluded from the simulation (internal error)."""
+    excluded from the simulation (internal error).
+    -------------
+    Args:
+        node (FederatedNode): FederatedNode object
+    -------------
+    Returns:
+        bool(): True if node is healthy, False otherwise."""
     if node.state == 0:
         logging.warning(f"Node {node.node_id} was updated successfully.")
         return True
@@ -79,7 +85,7 @@ def sample_nodes(nodes: list[FederatedNode], sample_size: int) -> list[Federated
         return sample
 
 
-def train_nodes(node: FederatedNode) -> tuple[int, tuple[List[float], List[float], List[float]]]:
+def train_nodes(node: FederatedNode) -> tuple[int, List[float]]:
     """Used to command the node to start the local training.
     Invokes .train_local_model method and returns the results.
     -------------
