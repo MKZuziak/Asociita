@@ -1,7 +1,8 @@
 # Libraries imports
-import sys, warnings, torch, gc
+import sys, warnings, torch, gc, copy
 import numpy as np
 from datasets import arrow_dataset
+from collections import OrderedDict
 # Modules imports
 from collections import Counter
 from typing import Any, Generic, Mapping, TypeVar, Union
@@ -49,6 +50,7 @@ class FederatedModel:
             None
         """
         self.device = None
+        self.initial_model = None
         self.optimizer: optim.Optimizer = None
         
         #TODO: Add support for training on different GPUs.
@@ -112,9 +114,9 @@ class FederatedModel:
         torch.utils.data.DataLoader.
         Args:
         -------------
-        local_dataset (list[...]: local dataset that should be loaded into DataLoader)
-        only_test (bool, default to False): If true, only a test set will be returned
-        Returns
+            local_dataset (list[...]: local dataset that should be loaded into DataLoader)
+            only_test (bool, default to False): If true, only a test set will be returned
+            Returns
         -------------
             Tuple[torch.utils.data.DataLoader, torch.utils.data.DataLoader]: training and test set
             or
@@ -149,6 +151,7 @@ class FederatedModel:
             )
             return testloader
 
+
     def print_data_stats(self, trainloader: torch.utils.data.DataLoader) -> None: #TODO
         """Debug function used to print stats about the loaded datasets.
         Args:
@@ -166,6 +169,7 @@ class FederatedModel:
         model_logger.info(f"{self.node_name}: Training set size: {num_examples['trainset']}")
         model_logger.info(f"{self.node_name}: Test set size: {num_examples['testset']}")
 
+
     def get_weights_list(self) -> list[float]:
         """Get the parameters of the network.
         Args
@@ -177,6 +181,7 @@ class FederatedModel:
         """
         return [val.cpu().numpy() for _, val in self.net.state_dict().items()]
 
+
     def get_weights(self):
         """Get the weights of the network.
         Raises
@@ -187,6 +192,20 @@ class FederatedModel:
             _type_: weights of the network
         """
         return self.net.state_dict()
+    
+
+    def get_gradients(self):
+        
+        assert self.initial_model != None, "Computing gradients require saving initial model first!"
+        weights_t1 = self.net.state_dict()
+        weights_t2 = self.initial_model.state_dict()
+        
+        self.gradients = OrderedDict.fromkeys(weights_t1.keys(), 0)
+        for key in weights_t1:
+            self.gradients[key] = weights_t2[key] - weights_t1[key]
+        
+        return self.gradients
+
 
     def update_weights(self, avg_tensors) -> None:
         """This function updates the weights of the network.
@@ -197,6 +216,7 @@ class FederatedModel:
             avg_tensors (_type_): tensors that we want to use in the network
         """
         self.net.load_state_dict(avg_tensors, strict=True)
+
 
     def store_model_on_disk(self) -> None: #TODO
         """This function is used to store the trained model
@@ -213,8 +233,26 @@ class FederatedModel:
         else:
             raise NotYetInitializedFederatedLearningError
 
+
+    def preserve_initial_model(self) -> None:
+        """Preserve the initial model provided at the
+        end of the turn (necessary for computing gradients,
+        when using aggregating methods such as FedOpt).
+        Args:
+        -------------
+            self
+        Returns
+        -------------
+            Tuple[float, float]: Loss and accuracy on the training set.
+        """
+        self.initial_model = copy.deepcopy(self.net)
+
+
     def train(self) -> tuple[float, torch.tensor]:
         """Train the network and computes loss and accuracy.
+        Args:
+        -------------
+            self
         Raises
         ------
             Exception: Raises an exception when Federated Learning is not initialized
@@ -222,6 +260,7 @@ class FederatedModel:
         -------
             Tuple[float, float]: Loss and accuracy on the training set.
         """
+
         criterion = nn.CrossEntropyLoss()
         running_loss = 0.0
         total_correct = 0

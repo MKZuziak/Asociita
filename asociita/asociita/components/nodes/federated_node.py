@@ -65,15 +65,20 @@ class FederatedNode:
 
     def train_local_model(
         self,
+        mode: str
     ) -> tuple[list[float], list[float], list[float]]:
         """This function starts the server phase of the federated learning.
         In particular, it trains the model locally and then sends the weights.
         Then the updated weights are received and used to update
         the local model.
-        Arguments:
-            self
-        Returns
-        -------
+        -------------
+        Args:
+        node (FederatedNode object): Node that we want to train.
+        mode (str): Mode of the training. 
+            Mode = 'weights': Node will return model's weights.
+            Mode = 'gradients': Node will return model's gradients.
+        -------------
+        Returns:
             Tuple[List[float], List[float], List[float]]: _description_
         """
         node_logger.info(f"Starting training on node {self.node_id}")
@@ -81,6 +86,9 @@ class FederatedNode:
         accuracy_list: list[float] = []
 
         local_epochs = self.settings['local_epochs']
+
+        if mode == 'gradients':
+            self.model.preserve_initial_model()
         
         for _ in range(local_epochs):
             metrics = self.local_training()
@@ -88,11 +96,22 @@ class FederatedNode:
             accuracy_list.append(metrics["accuracy"])
         
         node_logger.debug(f"Results of training on node {self.node_id}: {accuracy_list}")
-        return (
-            self.node_id,
-            self.model.get_weights()
+        if mode == 'weights:':
+            return (
+                self.node_id,
+                self.model.get_weights()
+                )
+        elif mode == 'gradients':
+            return (
+                self.node_id,
+                self.model.get_gradients()
             )
-    
+        else:
+            node_logger.warning("No mode was provided, returning only node's weights")
+            return (
+                self.node_id,
+                self.model.get_weights()
+                )
 
     def local_training(
         self,
