@@ -33,6 +33,17 @@ class Aggregators:
         for key in results:
             results[key] = torch.div(results[key], len(models))
         return results
+    
+
+    @staticmethod
+    def add_gradients(model_weights: OrderedDict, gradient: OrderedDict) -> OrderedDict:
+        """Adds gradients to the central weights, concluding one round of Federated Training."""
+        updated_weights = OrderedDict.fromkeys(model_weights.keys(), 0)
+        for key in model_weights:
+            updated_weights[key] = model_weights[key] - gradient[key]
+        return updated_weights
+
+
 
     @staticmethod
     def compute_distance_from_mean(shared_data: dict, average_weights: dict) -> dict:

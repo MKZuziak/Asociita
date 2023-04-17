@@ -89,16 +89,19 @@ def sample_nodes(nodes: list[FederatedNode], sample_size: int) -> list[Federated
         return sample
 
 
-def train_nodes(node: FederatedNode) -> tuple[int, List[float]]:
+def train_nodes(node: FederatedNode, mode: str = 'weights') -> tuple[int, List[float]]:
     """Used to command the node to start the local training.
     Invokes .train_local_model method and returns the results.
     -------------
     Args:
         node (FederatedNode object): Node that we want to train.
+        mode (str): Mode of the training. 
+            Mode = 'weights': Node will return model's weights.
+            Mode = 'gradients': Node will return model's gradients.
     -------------
     Returns:
         tuple(node_id: str, weights)"""
-    node_id, weights = node.train_local_model()
+    node_id, weights = node.train_local_model(mode = mode)
     return (node_id, weights)
 
 
@@ -154,9 +157,9 @@ class Orchestrator():
             self.state = 0
 
 
-    def training_protocol(self,
-                          nodes_data: list[datasets.arrow_dataset.Dataset, 
-                               datasets.arrow_dataset.Dataset]):
+    def fed_avg(self,
+                nodes_data: list[datasets.arrow_dataset.Dataset, 
+                datasets.arrow_dataset.Dataset]):
         
         # Defining the settings
         iterations = self.settings['iterations']
@@ -228,6 +231,99 @@ class Orchestrator():
                         node.model.update_weights(avg)
                     # Upadting the orchestrator
                     self.central_model.update_weights(avg)
+
+                    # Logging the metrics
+                    Handler.log_model_metrics(iteration=iteration,
+                        model = self.central_model,
+                        logger = orchestrator_logger)
+                    
+                    # Logging the metrics of sample or all nodes
+                    if self.settings['evaluation'] == "full":
+                        for node in nodes_green:
+                            Handler.log_model_metrics(iteration=iteration,
+                                model = node.model,
+                                logger = orchestrator_logger)
+        
+        orchestrator_logger.critical("Training complete")
+
+    
+    def fed_opt(self,
+                nodes_data: list[datasets.arrow_dataset.Dataset, 
+                datasets.arrow_dataset.Dataset]):
+        
+        # Defining the settings
+        iterations = self.settings['iterations']
+        nodes_number = self.settings['number_of_nodes']
+        local_warm_start = self.settings["local_warm_start"]
+        nodes = self.settings["nodes"]
+        sample_size = self.settings["sample_size"]
+        nodes_settings = self.settings["nodes_settings"]
+        
+
+        # Creating a list containing nodes, i.e. FederatedNode objects.
+        nodes_green = create_nodes(nodes, nodes_settings)
+
+
+        # Copying the the local model n times or initiating with local warm start.
+        if local_warm_start == True:
+            raise("Beginning the training with different local models not implemented yet.")
+        else:
+            model_list = [copy.deepcopy(self.central_net) for _ in range(nodes_number)]
+        
+        # PHASE ONE: NODES INITIALIZATION
+        # create the manager
+        with Manager() as manager:
+            # create the shared queue
+            queue = manager.Queue()
+            
+            
+            # create the pool of workers
+            with Pool(nodes_number) as pool:
+                # asynchronously apply the function
+                results = [
+                    pool.apply_async(prepare_nodes, (node, model, dataset, queue))
+                    for node, model, dataset in zip(nodes_green, model_list, nodes_data)
+                ]
+                # consume the results
+                # Define a list of healthy nodes
+                nodes_green = []
+                for result in results:
+                    # query for results
+                    _ = result.get()
+                    updated_node = queue.get()
+                    # Adds to list only if the node is healthy
+                    if check_health(updated_node):
+                        nodes_green.append(updated_node)
+            
+        #PHASE TWO: MODEL TRAINING
+        with Manager() as manager:
+            # create the shared queue
+            queue = manager.Queue()
+
+            # create the pool of workers
+            with Pool(sample_size) as pool:
+                for iteration in range(iterations):
+                    orchestrator_logger.info(f"Iteration {iteration}")
+                    gradients = {}
+                    
+                    # Sampling nodes and asynchronously apply the function
+                    sampled_nodes = sample_nodes(nodes_green, sample_size=sample_size)
+                    results = [pool.apply_async(train_nodes, (node, 'gradients')) for node in sampled_nodes]
+                    # consume the results
+                    for result in results:
+                        node_id, model_gradients = result.get()
+                        gradients[node_id] = copy.deepcopy(model_gradients)
+                    
+                    # Computing the average of gradients
+                    grad_avg = Aggregators.compute_average(gradients)
+                    updated_weights = Aggregators.add_gradients(self.central_model.get_weights(), grad_avg)
+                    
+                    
+                    # Updating the nodes
+                    for node in nodes_green:
+                        node.model.update_weights(updated_weights)
+                    # Upadting the orchestrator
+                    self.central_model.update_weights(updated_weights)
 
                     # Logging the metrics
                     Handler.log_model_metrics(iteration=iteration,
