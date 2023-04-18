@@ -1,0 +1,30 @@
+{
+    "orchestrator": {
+        "iterations": 12,
+        "number_of_nodes": 10,
+        "local_warm_start": false,
+        "sample_size": 4,
+        "evaluation": "full",
+        "save_metrics": true,
+        "save_models": false,
+        "save_path": 0,
+        "nodes": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9]
+    },
+    "nodes":{
+    "local_epochs": 4,
+    "model_settings": {
+        "optimizer": "RMS",
+        "batch_size": 32,
+        "learning_rate": 0.001}
+        }
+}

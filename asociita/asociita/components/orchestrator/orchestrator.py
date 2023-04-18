@@ -119,13 +119,9 @@ class Orchestrator():
         Returns
         ----------
         None"""
-        self.state = 1 # Attribute controlling the state of the object.
-                         # 0 - initialized, resting
-                         # 1 - initialized, in run-time
-        
-        self.settings = settings # Settings attribute (dict)
+        self.settings = settings["orchestrator"] # Settings attribute (dict)
+        self.node_settings = settings["nodes"]
         self.model = None
-        self.state = 0
     
 
     def prepare_orchestrator(self, 
@@ -145,16 +141,12 @@ class Orchestrator():
         Returns
         ----------
         None"""
-        assert self.state == 0, f"Object {self} is not resting, previous operation is still active."
-        self.state = 1
         self.validation_data = [validation_data]
         self.central_net = model
-        self.central_model = FederatedModel(settings = self.settings["nodes_settings"]["model_settings"],
+        self.central_model = FederatedModel(settings = self.node_settings["model_settings"],
                                         net=model,
                                         local_dataset=self.validation_data,
                                         node_name='orchestrator')
-        if self.central_model != None and self.central_net != None:
-            self.state = 0
 
 
     def fed_avg(self,
@@ -167,12 +159,11 @@ class Orchestrator():
         local_warm_start = self.settings["local_warm_start"]
         nodes = self.settings["nodes"]
         sample_size = self.settings["sample_size"]
-        nodes_settings = self.settings["nodes_settings"]
         save_path = self.settings["save_path"]
         
 
         # Creating a list containing nodes, i.e. FederatedNode objects.
-        nodes_green = create_nodes(nodes, nodes_settings)
+        nodes_green = create_nodes(nodes, self.node_settings)
 
 
         # Copying the the local model n times or initiating with local warm start.
@@ -260,12 +251,11 @@ class Orchestrator():
         local_warm_start = self.settings["local_warm_start"]
         nodes = self.settings["nodes"]
         sample_size = self.settings["sample_size"]
-        nodes_settings = self.settings["nodes_settings"]
         save_path = self.settings["save_path"]
         
 
         # Creating a list containing nodes, i.e. FederatedNode objects.
-        nodes_green = create_nodes(nodes, nodes_settings)
+        nodes_green = create_nodes(nodes, self.node_settings)
 
 
         # Copying the the local model n times or initiating with local warm start.
