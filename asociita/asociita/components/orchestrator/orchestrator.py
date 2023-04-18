@@ -258,6 +258,7 @@ class Orchestrator():
         nodes = self.settings["nodes"]
         sample_size = self.settings["sample_size"]
         nodes_settings = self.settings["nodes_settings"]
+        save_path = self.settings["save_path"]
         
 
         # Creating a list containing nodes, i.e. FederatedNode objects.
@@ -326,9 +327,11 @@ class Orchestrator():
                     self.central_model.update_weights(updated_weights)
 
                     # Logging the metrics
-                    Handler.log_model_metrics(iteration=iteration,
+                    Handler.save_model_metrics(iteration=iteration,
                         model = self.central_model,
-                        logger = orchestrator_logger)
+                        logger = orchestrator_logger,
+                        saving_path= save_path,
+                        log_to_screen=True)
                     
                     # Logging the metrics of sample or all nodes
                     if self.settings['evaluation'] == "full":
