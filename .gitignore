@@ -155,3 +155,5 @@ data/FashionMNIST/raw/train-labels-idx1-ubyte
 data/FashionMNIST/raw/train-labels-idx1-ubyte.gz
 notebooks/pytorch_transform.ipynb
 metrics.csv
+metrics_fedopt.csv
+metrics_fedavg.csv
