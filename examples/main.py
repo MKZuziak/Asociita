@@ -1,4 +1,5 @@
 from asociita.components.orchestrator.generic_orchestrator import Orchestrator
+from asociita.components.orchestrator.fedopt_orchestrator import Fedopt_Orchestrator
 from asociita.components.nodes.federated_node import FederatedNode
 from asociita.models.pytorch.mnist import MnistNet
 from asociita.datasets.fetch_data import load_data
@@ -31,7 +32,7 @@ if __name__ == "__main__":
     
     
     # SIMULATION: Creating an Orchestrator object
-    orchestrator = Orchestrator(settings=settings)
+    orchestrator = Fedopt_Orchestrator(settings=settings)
     # SIMULATION: Loading the model onto the orchestrator
     orchestrator.prepare_orchestrator(model=model, validation_data=orchestrator_data)
 
