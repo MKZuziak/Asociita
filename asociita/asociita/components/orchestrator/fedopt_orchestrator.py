@@ -38,6 +38,7 @@ class Fedopt_Orchestrator(Orchestrator):
         clients, it aggregates gradients (understood as a difference between the weights
         of a model after all t epochs of the local training) and aggregates according to 
         provided rule.
+        SOURCE: Adaptive Federated Optimization, S.J. Reddi et al.
 
         -------------
         Args:

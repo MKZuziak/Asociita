@@ -142,6 +142,7 @@ class Orchestrator():
         settings. The train_protocol of the generic_orchestrator.Orchestrator
         follows a classic FedAvg algorithm - it averages the local weights
         and aggregates them taking a weighted average.
+        SOURCE: Communication-Efficient Learning of Deep Networks from Decentralized Data, H.B. McMahan et al.
 
         -------------
         Args:
