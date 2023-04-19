@@ -1,6 +1,6 @@
 {
     "orchestrator": {
-        "iterations": 12,
+        "iterations": 3,
         "number_of_nodes": 10,
         "local_warm_start": false,
         "sample_size": 4,

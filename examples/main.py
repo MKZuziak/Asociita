@@ -1,4 +1,4 @@
-from asociita.components.orchestrator.orchestrator import Orchestrator
+from asociita.components.orchestrator.generic_orchestrator import Orchestrator
 from asociita.components.nodes.federated_node import FederatedNode
 from asociita.models.pytorch.mnist import MnistNet
 from asociita.datasets.fetch_data import load_data
@@ -38,7 +38,7 @@ if __name__ == "__main__":
 
     # TRAINING PHASE: running the training protocol.
     #orchestrator.fed_avg(nodes_data=nodes_data)
-    orchestrator.fed_opt(nodes_data=nodes_data)
+    orchestrator.train_protocol(nodes_data=nodes_data)
 
     # Checking the model
     #model = orchestrator.central_model
