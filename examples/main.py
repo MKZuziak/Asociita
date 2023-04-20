@@ -9,7 +9,7 @@ import os
 if __name__ == "__main__":
     # CONFIGURATION: Training configuration
     save_path = os.path.join(os.getcwd(), r'examples', r'metrics_fedopt.csv')
-    settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'simulation_configuration.json'))
+    settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'Basic_Fedopt_example.json'))
     settings["orchestrator"]['save_path'] = os.path.join(os.getcwd(), 'examples', 'metrics.csv')
     # CONFIGURATION: Dataset configuration
     data_settings = {

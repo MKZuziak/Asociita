@@ -42,9 +42,8 @@ class Aggregators:
         for key in model_weights:
             updated_weights[key] = model_weights[key] - gradient[key]
         return updated_weights
-
-
-
+    
+    
     @staticmethod
     def compute_distance_from_mean(shared_data: dict, average_weights: dict) -> dict:
         """This function takes as input the weights received from all the nodes and

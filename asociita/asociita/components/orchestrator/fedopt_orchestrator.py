@@ -7,6 +7,7 @@ from asociita.utils.computations import Aggregators
 from asociita.utils.handlers import Handler
 from asociita.utils.loggers import Loggers
 from asociita.utils.orchestrations import prepare_nodes, create_nodes, check_health, sample_nodes, train_nodes
+from asociita.utils.optimizers import Optimizers
 from multiprocessing import Pool, Manager
 from torch import nn
 
@@ -55,8 +56,10 @@ class Fedopt_Orchestrator(Orchestrator):
         nodes = self.settings["nodes"]
         sample_size = self.settings["sample_size"]
         save_path = self.settings["save_path"]
-        
 
+        optimizer_settings = self.settings["optimizer"]
+        optimizer_name = optimizer_settings["name"]
+        
         # CREATING FEDERATED NODES
         nodes_green = create_nodes(nodes, self.node_settings) # Exterior method / function, can override in childr.
 
@@ -70,6 +73,8 @@ class Fedopt_Orchestrator(Orchestrator):
                                                 model_list=model_list,
                                                 data_list=nodes_data,
                                                 nodes_number=nodes_number)
+        
+        Optim = Optimizers(weights = self.central_model.get_weights()) # Setting up the Optim.
         
         # TRAINING PHASE ----- FEDOPT
         with Manager() as manager:
@@ -94,9 +99,10 @@ class Fedopt_Orchestrator(Orchestrator):
                     
                     # Computing the average of gradients
                     grad_avg = Aggregators.compute_average(gradients) # AGGREGATING FUNCTION -> CHANGE IF NEEDED
-                    updated_weights = Aggregators.add_gradients(self.central_model.get_weights(), grad_avg)
-                    
-                    
+                    updated_weights = Optim.fed_optimize(optimizer=optimizer_name,
+                                                         settings=optimizer_settings,
+                                                         weights=self.central_model.get_weights(),
+                                                         delta=grad_avg)
                     # Updating the nodes
                     for node in nodes_green:
                         node.model.update_weights(updated_weights)
