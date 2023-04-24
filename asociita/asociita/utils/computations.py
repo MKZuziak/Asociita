@@ -96,4 +96,10 @@ class Subsets:
             return superset
         else:
             return superset
+    
 
+    def select_subsets(coalitions: dict,
+                       searched_node: int):
+        subsets = {nodes: model for nodes, model in coalitions.items() 
+                  if searched_node not in nodes}
+        return subsets

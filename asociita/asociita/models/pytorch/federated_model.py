@@ -386,5 +386,3 @@ class FederatedModel:
                     true_positive_rate,
                     false_positive_rate
                 )
-
-            raise 
