@@ -8,7 +8,6 @@ from asociita.utils.handlers import Handler
 from asociita.utils.loggers import Loggers
 from asociita.utils.orchestrations import prepare_nodes, create_nodes, check_health, sample_nodes, train_nodes
 from asociita.utils.optimizers import Optimizers
-from asociita.components.evaluator.evaluator import Evaluator
 from multiprocessing import Pool, Manager
 from torch import nn
 
@@ -33,8 +32,7 @@ class Fedopt_Orchestrator(Orchestrator):
 
     def train_protocol(self,
                 nodes_data: list[datasets.arrow_dataset.Dataset, 
-                datasets.arrow_dataset.Dataset],
-                evaluator: None | Evaluator = None) -> None:
+                datasets.arrow_dataset.Dataset]) -> None:
         """"Performs a full federated training according to the initialized
         settings. The train_protocol of the fedopt.orchestrator.Fedopt_Orchestrator
         follows a popular FedAvg generalisation, FedOpt. Instead of weights from each
@@ -47,7 +45,6 @@ class Fedopt_Orchestrator(Orchestrator):
         Args:
             nodes_data(list[..., ....]): list containing train set and test set
                 wrapped in a hugging facr arrow_dataset.Dataset containers.
-            evaluator (None | Evaluator_class): Evaluator of particular nodes contribution.
         -------------
         Returns:
             None"""
