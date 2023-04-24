@@ -8,7 +8,7 @@ from asociita.utils.handlers import Handler
 from asociita.utils.loggers import Loggers
 from asociita.utils.orchestrations import prepare_nodes, create_nodes, check_health, sample_nodes, train_nodes
 from asociita.utils.optimizers import Optimizers
-from asociita.components.evaluator.evaluator import Evaluator
+from asociita.components.evaluator.or_evaluator import OR_Evaluator
 from multiprocessing import Pool, Manager
 from torch import nn
 
@@ -34,8 +34,7 @@ class Evaluator_Orchestrator(Orchestrator):
 
     def train_protocol(self,
                 nodes_data: list[datasets.arrow_dataset.Dataset, 
-                datasets.arrow_dataset.Dataset],
-                evaluator: None | Evaluator = None) -> None:
+                datasets.arrow_dataset.Dataset]) -> None:
         """"Performs a full federated training according to the initialized
         settings. The train_protocol of the fedopt.orchestrator.Fedopt_Orchestrator
         follows a popular FedAvg generalisation, FedOpt. Instead of weights from each
@@ -48,7 +47,6 @@ class Evaluator_Orchestrator(Orchestrator):
         Args:
             nodes_data(list[..., ....]): list containing train set and test set
                 wrapped in a hugging facr arrow_dataset.Dataset containers.
-            evaluator (None | Evaluator_class): Evaluator of particular nodes contribution.
         -------------
         Returns:
             None"""
@@ -67,7 +65,8 @@ class Evaluator_Orchestrator(Orchestrator):
         optimizer_name = optimizer_settings["name"]
 
         # EVALUATOR SETTINGS
-        
+        if self.settings["evaluation"].get('Shapley_OR'):
+            shapley_or = True
         
         # CREATING FEDERATED NODES
         nodes_green = create_nodes(nodes, self.node_settings) # Exterior method / function, can override in childr.
@@ -84,6 +83,10 @@ class Evaluator_Orchestrator(Orchestrator):
                                                 nodes_number=nodes_number)
         
         Optim = Optimizers(weights = self.central_model.get_weights()) # Setting up the Optim.
+
+        if shapley_or == True:
+            or_evaluator = OR_Evaluator(settings=self.settings,
+                                        model = model_list[0])
         
         # TRAINING PHASE ----- FEDOPT
         with Manager() as manager:

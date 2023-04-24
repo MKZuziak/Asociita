@@ -1,5 +1,6 @@
 from asociita.components.orchestrator.generic_orchestrator import Orchestrator
 from asociita.components.orchestrator.fedopt_orchestrator import Fedopt_Orchestrator
+from asociita.components.orchestrator.evaluator_orchestrator import Evaluator_Orchestrator
 from asociita.components.nodes.federated_node import FederatedNode
 from asociita.models.pytorch.mnist import MnistNet
 from asociita.datasets.fetch_data import load_data
@@ -9,7 +10,7 @@ import os
 if __name__ == "__main__":
     # CONFIGURATION: Training configuration
     save_path = os.path.join(os.getcwd(), r'examples', r'metrics_fedopt.csv')
-    settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'Basic_Fedopt_example.json'))
+    settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'Contribution_example.json'))
     settings["orchestrator"]['save_path'] = os.path.join(os.getcwd(), 'examples', 'metrics.csv')
     # CONFIGURATION: Dataset configuration
     data_settings = {
@@ -32,7 +33,7 @@ if __name__ == "__main__":
     
     
     # SIMULATION: Creating an Orchestrator object
-    orchestrator = Fedopt_Orchestrator(settings=settings)
+    orchestrator = Evaluator_Orchestrator(settings=settings)
     # SIMULATION: Loading the model onto the orchestrator
     orchestrator.prepare_orchestrator(model=model, validation_data=orchestrator_data)
 
