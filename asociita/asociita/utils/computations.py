@@ -1,10 +1,11 @@
 from collections import OrderedDict
 from typing import Any, Mapping, TypeVar
 import torch
+import itertools
 from torch import Tensor
 
 class Aggregators:
-    """Define the Aggregators class."""
+    """Defines the Aggregators class."""
 
     @staticmethod
     def compute_average(shared_data: dict) -> dict[Any, Any]:
@@ -73,4 +74,26 @@ class Aggregators:
 
             distances[node_name] = torch.mean(torch.stack(mean))
 
-        return 
+        return
+    
+
+class Subsets:
+    """Defines the Subsets class."""
+
+    @staticmethod
+    def form_superset(elements: list, 
+                      remove_empty: bool = True,
+                      return_dict: bool = True) -> list[list] | dict[list : None]:
+        superset = list()
+        for l in range(len(elements) + 1):
+            for subset in itertools.combinations(elements, l):
+                superset.append(list(subset))
+        if remove_empty == True:
+            superset.pop(0)
+        
+        if return_dict == True:
+            superset = {tuple(coalition): None for coalition in superset}
+            return superset
+        else:
+            return superset
+
