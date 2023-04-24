@@ -1,5 +1,7 @@
 from asociita.utils.computations import Subsets
 from asociita.models.pytorch.federated_model import FederatedModel
+from asociita.utils.computations import Aggregators
+from asociita.utils.optimizers import Optimizers
 from copy import deepcopy
 
 
@@ -15,3 +17,23 @@ class OR_Evaluator():
             self.shapley_or_recon = Subsets.form_superset(settings['nodes'], return_dict=False)
             self.shapley_or_recon = {tuple(coalition) : deepcopy(model) for 
                                      coalition in self.shapley_or_recon}
+    
+
+    def track_shapley(self,
+                      gradients):
+        # Establishing gradients for all possible coalitions in N
+        delta_s = Subsets.form_superset(self.settings["nodes"], return_dict=True)
+        for coalition in delta_s:
+            specific_gradients = {}
+            for member in coalition:
+                specific_gradients[member] = gradients[member]
+            delta_s[coalition] = Aggregators.compute_average(specific_gradients)
+        
+        # Upadting models of all possible coalitions in N
+        for coalition in self.shapley_or_recon:
+            model_s_t = self.shapley_or_recon[coalition]
+            delta_s_t = delta_s[coalition]
+            updated_weights = Optimizers.SimpleFedopt(weights=model_s_t.get_weights(),
+                                                                       delta=delta_s_t,
+                                                                       learning_rate=0.99)
+            self.shapley_or_recon[coalition].update_weights(updated_weights)

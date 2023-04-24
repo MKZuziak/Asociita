@@ -86,7 +86,7 @@ class Evaluator_Orchestrator(Orchestrator):
 
         if shapley_or == True:
             or_evaluator = OR_Evaluator(settings=self.settings,
-                                        model = model_list[0])
+                                        model = self.central_model)
         
         # TRAINING PHASE ----- FEDOPT
         with Manager() as manager:
@@ -115,6 +115,10 @@ class Evaluator_Orchestrator(Orchestrator):
                                                          settings=optimizer_settings,
                                                          weights=self.central_model.get_weights(),
                                                          delta=grad_avg)
+                    
+                    if shapley_or == True:
+                        or_evaluator.track_shapley(gradients=gradients)
+
                     # Updating the nodes
                     for node in nodes_green:
                         node.model.update_weights(updated_weights)
@@ -135,5 +139,14 @@ class Evaluator_Orchestrator(Orchestrator):
                             Handler.log_model_metrics(iteration=iteration,
                                 model = node.model,
                                 logger = orchestrator_logger) # LOGGING METRICS FUNCTION -> CHANGE IF NEEDED
-        
+                    
+                    #TODO: TO remove, testing a limited model belonging only to some of the clients.
+                    print("LOGGING THE METRICS OF COALITION 0, 1, 2, 3")
+                    Handler.log_model_metrics(iteration=iteration,
+                                              model = or_evaluator.shapley_or_recon[(0, 1, 2, 3,)],
+                                              logger = orchestrator_logger)
+                    print("LOGGING THE METRICS OF THE MODEL 1")
+                    Handler.log_model_metrics(iteration=iteration,
+                                              model = or_evaluator.shapley_or_recon[(1,)],
+                                            logger= orchestrator_logger)
         orchestrator_logger.critical("Training complete")

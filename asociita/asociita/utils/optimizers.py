@@ -39,9 +39,8 @@ class Optimizers():
         else:
             raise "Wrong optimizer was provided. Available optimizers: FedAdagard, FedYogi, FedAdam."
 
-
-    def SimpleFedopt(self,
-                     weights: OrderedDict,
+    @staticmethod
+    def SimpleFedopt(weights: OrderedDict,
                      delta: OrderedDict,
                      learning_rate: float):
         """Adds gradients to the central weights, concluding one round of Federated Training."""
