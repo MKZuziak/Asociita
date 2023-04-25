@@ -149,6 +149,8 @@ class Evaluator_Orchestrator(Orchestrator):
                     Handler.log_model_metrics(iteration=iteration,
                                               model = or_evaluator.shapley_or_recon[(1,)],
                                             logger= orchestrator_logger)
+        or_evaluator.calculate_loo()
+        orchestrator_logger.info(or_evaluator.loo_values)
         or_evaluator.calculate_shaply()
-        print(or_evaluator.shapley_values)
+        orchestrator_logger.info(or_evaluator.shapley_values)
         orchestrator_logger.critical("Training complete")

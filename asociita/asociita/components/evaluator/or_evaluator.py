@@ -20,7 +20,17 @@ class OR_Evaluator():
             self.shapley_or_recon = Subsets.form_superset(settings['nodes'], return_dict=False)
             self.shapley_or_recon = {tuple(coalition) : deepcopy(model) for 
                                      coalition in self.shapley_or_recon}
-    
+        
+        if self.evaluation.get("LOO_OR"):
+            self.loo_values = {node:float(0) for node in settings['nodes']}
+            if self.shapley_or_recon: # If we already have coalition for shapleys values, we can use model of those
+                self.loo_or_recon = {coalition: model for coalition, model in self.shapley_or_recon.items()
+                                     if len(coalition) >= (settings["number_of_nodes"] - 1)}
+            else:
+                self.loo_or_recon = Subsets.form_superset(settings['nodes'], return_dict=False)
+                self.loo_or_recon = {tuple(coaliton) : deepcopy(model) for
+                                     coaliton in self.loo_or_recon}
+
 
     def track_shapley(self,
                       gradients):
@@ -60,4 +70,16 @@ class OR_Evaluator():
                 shapley_value += summand
             
             self.shapley_values[node] = shapley_value
+    
+
+    def calculate_loo(self):
+        general_model = self.loo_or_recon[tuple(self.settings['nodes'])]
+        general_subset = deepcopy(self.settings['nodes'])
+        for node in self.loo_values:
+            subset_without_i = deepcopy(general_subset)
+            subset_without_i.remove(node)
+            model_without_i = self.loo_or_recon[tuple(sorted(subset_without_i))]
+            model_with_i = self.loo_or_recon[tuple(sorted(general_subset))]
+
+            self.loo_values[node] = model_with_i.evaluate_model()[1] - model_without_i.evaluate_model()[1]
             

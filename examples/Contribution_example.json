@@ -10,7 +10,7 @@
             "b1": 0.3,
             "tau": 0.001},
         "evaluation": {"Shapley_OR": true,
-                        "LOO_OR": false},
+                        "LOO_OR": true},
         "save_metrics": true,
         "save_models": false,
         "save_path": 0,

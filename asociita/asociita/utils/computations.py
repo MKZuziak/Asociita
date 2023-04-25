@@ -97,6 +97,20 @@ class Subsets:
         else:
             return superset
     
+    @staticmethod
+    def form_loo_set(elements: list,
+                     return_dict: bool = True) -> list[list] | dict[list : None]:
+        loo_set = list()
+        for l in range(start = len(elements), stop = len(elements) + 1):
+            for subset in itertools.combinations(elements, l):
+                loo_set.append(list(subset))
+        
+        if return_dict == True:
+            loo_set = {tuple(coalition) : None for coalition in loo_set}
+            return loo_set
+        else:
+            return loo_set
+
 
     def select_subsets(coalitions: dict,
                        searched_node: int):
