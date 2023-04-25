@@ -52,6 +52,24 @@ class OR_Evaluator():
             self.shapley_or_recon[coalition].update_weights(updated_weights)
     
 
+    def track_loo(self,
+                   gradients):
+        delta_s = {coalition: float(0) for coalition in self.loo_or_recon.keys()}
+        for coalition in delta_s:
+            specific_gradients = {}
+            for member in coalition:
+                specific_gradients[member] = gradients[member]
+            delta_s[coalition] = Aggregators.compute_average(specific_gradients)
+        
+        # Upadting models of all possible coalitions in N
+        for coalition in self.loo_or_recon:
+            model_s_t = self.shapley_or_recon[coalition]
+            delta_s_t = delta_s[coalition]
+            updated_weights = Optimizers.SimpleFedopt(weights=model_s_t.get_weights(),
+                                                      delta=delta_s_t,
+                                                      learning_rate=0.99)
+            self.loo_or_recon[coalition].update_weights(updated_weights)
+
     def calculate_shaply(self):
         N = self.settings['number_of_nodes']
         for node in self.shapley_values:
@@ -79,7 +97,6 @@ class OR_Evaluator():
             subset_without_i = deepcopy(general_subset)
             subset_without_i.remove(node)
             model_without_i = self.loo_or_recon[tuple(sorted(subset_without_i))]
-            model_with_i = self.loo_or_recon[tuple(sorted(general_subset))]
 
-            self.loo_values[node] = model_with_i.evaluate_model()[1] - model_without_i.evaluate_model()[1]
+            self.loo_values[node] = general_model.evaluate_model()[1] - model_without_i.evaluate_model()[1]
             

@@ -8,7 +8,7 @@ from asociita.utils.handlers import Handler
 from asociita.utils.loggers import Loggers
 from asociita.utils.orchestrations import prepare_nodes, create_nodes, check_health, sample_nodes, train_nodes
 from asociita.utils.optimizers import Optimizers
-from asociita.components.evaluator.or_evaluator import OR_Evaluator
+from asociita.components.evaluator.evaluation_manager import Evaluation_Manager
 from multiprocessing import Pool, Manager
 from torch import nn
 
@@ -64,9 +64,9 @@ class Evaluator_Orchestrator(Orchestrator):
         optimizer_settings = self.settings["optimizer"]
         optimizer_name = optimizer_settings["name"]
 
-        # EVALUATOR SETTINGS
-        if self.settings["evaluation"].get('Shapley_OR'):
-            shapley_or = True
+        # EVALUATION MANAGER
+        evaluation_maanger = Evaluation_Manager(settings=self.settings,
+                                                model=self.central_model)
         
         # CREATING FEDERATED NODES
         nodes_green = create_nodes(nodes, self.node_settings) # Exterior method / function, can override in childr.
@@ -84,9 +84,6 @@ class Evaluator_Orchestrator(Orchestrator):
         
         Optim = Optimizers(weights = self.central_model.get_weights()) # Setting up the Optim.
 
-        if shapley_or == True:
-            or_evaluator = OR_Evaluator(settings=self.settings,
-                                        model = self.central_model)
         
         # TRAINING PHASE ----- FEDOPT
         with Manager() as manager:
@@ -116,8 +113,7 @@ class Evaluator_Orchestrator(Orchestrator):
                                                          weights=self.central_model.get_weights(),
                                                          delta=grad_avg)
                     
-                    if shapley_or == True:
-                        or_evaluator.track_shapley(gradients=gradients)
+                    evaluation_maanger.track_gradients(gradients=gradients)
 
                     # Updating the nodes
                     for node in nodes_green:
@@ -140,17 +136,6 @@ class Evaluator_Orchestrator(Orchestrator):
                                 model = node.model,
                                 logger = orchestrator_logger) # LOGGING METRICS FUNCTION -> CHANGE IF NEEDED
                     
-                    #TODO: TO remove, testing a limited model belonging only to some of the clients.
-                    print("LOGGING THE METRICS OF COALITION 0, 1, 2, 3")
-                    Handler.log_model_metrics(iteration=iteration,
-                                              model = or_evaluator.shapley_or_recon[(0, 1, 2, 3,)],
-                                              logger = orchestrator_logger)
-                    print("LOGGING THE METRICS OF THE MODEL 1")
-                    Handler.log_model_metrics(iteration=iteration,
-                                              model = or_evaluator.shapley_or_recon[(1,)],
-                                            logger= orchestrator_logger)
-        or_evaluator.calculate_loo()
-        orchestrator_logger.info(or_evaluator.loo_values)
-        or_evaluator.calculate_shaply()
-        orchestrator_logger.info(or_evaluator.shapley_values)
+        evaluation_results = evaluation_maanger.calculate_results()
+        print(evaluation_results)
         orchestrator_logger.critical("Training complete")
