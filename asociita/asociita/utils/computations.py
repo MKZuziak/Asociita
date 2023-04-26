@@ -78,12 +78,24 @@ class Aggregators:
     
 
 class Subsets:
-    """Defines the Subsets class."""
+    """Defines the Subsets class - a set of static methods
+    that helps with some set operations."""
 
     @staticmethod
     def form_superset(elements: list, 
                       remove_empty: bool = True,
-                      return_dict: bool = True) -> list[list] | dict[list : None]:
+                      return_dict: bool = True) -> list[list] | dict[tuple : None]:
+        """Given a list of elements of a length N, forms a superset of a cardinality
+        2^N, containing all the possible combinations of elements in the passed list.
+        
+        -------------
+        Args
+            elements (list): a list containing all the elements from which we want to form a superset.
+            remove_empty (bool): if True, will remove an empty set that is formally also included in the superset.
+            return_dict (bool): if True, will return the superset in a form {tuple: None} rather than [list].
+       -------------
+         Returns
+            list[list] | dict[tuple : None]"""
         superset = list()
         for l in range(len(elements) + 1):
             for subset in itertools.combinations(elements, l):
@@ -100,6 +112,15 @@ class Subsets:
     @staticmethod
     def form_loo_set(elements: list,
                      return_dict: bool = True) -> list[list] | dict[list : None]:
+        """Given a list of elements of a length N, forms a set containing all the possible
+        lists of N and N-1 length.
+        -------------
+        Args
+            elements (list): a list containing all the elements from which we want to form a superset.
+            return_dict (bool): if True, will return the superset in a form {tuple: None} rather than [list].
+       -------------
+         Returns
+            list[list] | dict[tuple : None]"""
         loo_set = list()
         for l in range(start = len(elements), stop = len(elements) + 1):
             for subset in itertools.combinations(elements, l):
@@ -113,7 +134,17 @@ class Subsets:
 
 
     def select_subsets(coalitions: dict,
-                       searched_node: int):
+                       searched_node: int) -> dict[tuple : Any]:
+        """Given a list of possible coalitions and a searched node, will return
+        every possible coalition which DO NOT CONTAIN the searche node.
+        -------------
+        Args
+            coalitions (dict): a superset or a set of all possible coalitions, mapping
+                each coalition to some value, e.g. {(1, 2, 3,): None}
+            searched_node (int): an id of the searched node.
+       -------------
+         Returns
+            dict[tuple : Any]"""
         subsets = {nodes: model for nodes, model in coalitions.items() 
                   if searched_node not in nodes}
         return subsets
