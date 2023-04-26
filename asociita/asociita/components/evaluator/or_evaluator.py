@@ -23,6 +23,7 @@ class OR_Evaluator():
             None"""
         self.settings = settings
         self.evaluation = settings['evaluation']
+        self.recorded_values = {} # Maps every coalition to it's value, implemented to decrease the complexity.
         self.shapley_or_recon = None
         
         # Creates coalitions for Shapley, if so indicated in the settings.
@@ -115,19 +116,35 @@ class OR_Evaluator():
          Returns
             None"""
         N = self.settings['number_of_nodes']
+        operation_counter = 1
+        number_of_operations = 2 ** N - 1
         for node in self.shapley_values:
             shapley_value = float(0)
             subsets = Subsets.select_subsets(coalitions=self.shapley_or_recon,
                                             searched_node=node)
             for subset in subsets.keys():
-                print(f"Processing subset {subset}")
-                subset_without_i = subset
-                subset_with_i = subset + (node, )
+                subset_without_i = tuple(sorted(subset))
+                subset_with_i = tuple(sorted(subset + (node, )))
 
-                model_without_i = self.shapley_or_recon[tuple(sorted(subset_without_i))]
-                model_with_i = self.shapley_or_recon[tuple(sorted(subset_with_i))]
+                if subset_without_i in self.recorded_values:
+                    score_without_i = self.recorded_values[subset_without_i]
+                else:
+                    print(f"{operation_counter} of {number_of_operations}: forming and evaluating subset {subset_without_i}")
+                    model_without_i = self.shapley_or_recon[subset_without_i]
+                    score_without_i = model_without_i.evaluate_model()[1]
+                    self.recorded_values[subset_without_i] = score_without_i
+                    operation_counter += 1
 
-                summand = (model_with_i.evaluate_model()[1] - model_without_i.evaluate_model()[1]) /  math.comb((N-1), len(subset))
+                if subset_with_i in self.recorded_values:
+                    score_with_i = self.recorded_values[subset_with_i]
+                else:
+                    print(f"{operation_counter} of {number_of_operations}: forming and evaluating subset {subset_with_i}")
+                    model_with_i = self.shapley_or_recon[subset_with_i]
+                    score_with_i = model_with_i.evaluate_model()[1]
+                    self.recorded_values[subset_with_i] = score_with_i
+                    operation_counter += 1
+                
+                summand = (score_with_i - score_without_i) /  math.comb((N-1), len(subset))
                 shapley_value += summand
             
             self.shapley_values[node] = shapley_value
@@ -141,12 +158,28 @@ class OR_Evaluator():
        -------------
          Returns
             None"""
-        general_model = self.loo_or_recon[tuple(self.settings['nodes'])]
-        general_subset = deepcopy(self.settings['nodes'])
+        
+        all_nodes = deepcopy(self.settings['nodes'])
+        general_subset = tuple(self.settings['nodes'])
+        if general_subset in self.recorded_values:
+            general_score = self.recorded_values[general_subset]
+        else:
+            print(f"Forming and evaluating subset {general_subset}")
+            general_model = self.loo_or_recon[general_subset]
+            general_score = general_model.evaluate_model()[1]
+            self.recorded_values[general_subset] = general_score
+        
         for node in self.loo_values:
-            subset_without_i = deepcopy(general_subset)
+            subset_without_i = deepcopy(all_nodes)
             subset_without_i.remove(node)
-            model_without_i = self.loo_or_recon[tuple(sorted(subset_without_i))]
-
-            self.loo_values[node] = general_model.evaluate_model()[1] - model_without_i.evaluate_model()[1]
+            subset_without_i = tuple(sorted(subset_without_i))
+            if subset_without_i in self.recorded_values:
+                score_without_i = self.recorded_values[subset_without_i]
+            else:
+                print(f"Forming and evaluating subset {subset_without_i}")
+                model_without_i = self.loo_or_recon[subset_without_i]
+                score_without_i = model_without_i.evaluate_model()[1]
+                self.recorded_values[subset_without_i] = score_without_i
+            
+            self.loo_values[node] = general_score - score_without_i
             
