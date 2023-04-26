@@ -51,51 +51,46 @@ class Evaluator_Orchestrator(Orchestrator):
         Returns:
             None"""
         
-        # SETTINGS -> CHANGE IF NEEDED
+        # 1. SETTINGS -> CHANGE IF NEEDED
         # GENERAL SETTINGS
-        iterations = self.settings['iterations']
-        nodes_number = self.settings['number_of_nodes']
-        local_warm_start = self.settings["local_warm_start"]
-        nodes = self.settings["nodes"]
-        sample_size = self.settings["sample_size"]
-        save_path = self.settings["save_path"]
-
+        iterations = self.settings['iterations'] # Number of iterations of the Fed training, int.
+        nodes_number = self.settings['number_of_nodes'] # Number of nodes prepared for sampling, int.
+        local_warm_start = self.settings["local_warm_start"] # Local warm start for pre-trained models - not implemented yet.
+        nodes = self.settings["nodes"] # List of nodes, list[int]
+        sample_size = self.settings["sample_size"] # Size of the sample, int.
+        save_path = self.settings["save_path"] # Save_path of all the relevant sim. details, str or path-like.
         # OPTIMIZER SETTINGS
-        optimizer_settings = self.settings["optimizer"]
-        optimizer_name = optimizer_settings["name"]
+        optimizer_settings = self.settings["optimizer"] # Dict containing instructions for the optimizer, dict.
+        optimizer_name = optimizer_settings["name"] # Name of the optimizer, e.g. FedAdagard, dict.
+        
 
-        # EVALUATION MANAGER
+        # 2. SET-UP PHASE -> CHANGE IF NEEDED
+        # SETTING-UP EVALUATION MANAGER
         evaluation_maanger = Evaluation_Manager(settings=self.settings,
                                                 model=self.central_model)
-        
         # CREATING FEDERATED NODES
-        nodes_green = create_nodes(nodes, self.node_settings) # Exterior method / function, can override in childr.
-
-
+        nodes_green = create_nodes(nodes, self.node_settings)
         # CREATING LOCAL MODELS (that will be loaded onto nodes)
         model_list = self.model_initialization(nodes_number=nodes_number,
-                                               model=self.central_net) # Exterior method / function, can overide in childr.
-        
+                                               model=self.central_net)
         # INITIALIZING ALL THE NODES
-        nodes_green = self.nodes_initialization(nodes_list=nodes_green, # Exterion method / function, can overide in child.
+        nodes_green = self.nodes_initialization(nodes_list=nodes_green,
                                                 model_list=model_list,
                                                 data_list=nodes_data,
                                                 nodes_number=nodes_number)
-        
-        Optim = Optimizers(weights = self.central_model.get_weights()) # Setting up the Optim.
+        # SETTING UP THE OPTIMIZER
+        Optim = Optimizers(weights = self.central_model.get_weights())
 
-        
-        # TRAINING PHASE ----- FEDOPT
+
+        # 3. TRAINING PHASE ----- FEDOPT
         with Manager() as manager:
             # create the shared queue
             queue = manager.Queue()
-
             # create the pool of workers
             with Pool(sample_size) as pool:
                 for iteration in range(iterations):
                     orchestrator_logger.info(f"Iteration {iteration}")
                     gradients = {}
-                    
                     # Sampling nodes and asynchronously apply the function
                     sampled_nodes = sample_nodes(nodes_green, 
                                                  sample_size=sample_size,
@@ -112,8 +107,8 @@ class Evaluator_Orchestrator(Orchestrator):
                                                          settings=optimizer_settings,
                                                          weights=self.central_model.get_weights(),
                                                          delta=grad_avg)
-                    
-                    evaluation_maanger.track_gradients(gradients=gradients)
+                    # TRACKING GRADIENTS FOR EVALUATION
+                    evaluation_maanger.track_gradients(gradients=gradients) # TRACKING FUNCTION -> CHANGE IF NEEDED
 
                     # Updating the nodes
                     for node in nodes_green:
@@ -135,7 +130,11 @@ class Evaluator_Orchestrator(Orchestrator):
                             Handler.log_model_metrics(iteration=iteration,
                                 model = node.model,
                                 logger = orchestrator_logger) # LOGGING METRICS FUNCTION -> CHANGE IF NEEDED
-                    
+        
+        # 4. FINALIZING PHASE
+        # EVALUATING THE RESULTS
         evaluation_results = evaluation_maanger.calculate_results()
+        
+        # FINAL MESSAGES
         print(evaluation_results)
         orchestrator_logger.critical("Training complete")
