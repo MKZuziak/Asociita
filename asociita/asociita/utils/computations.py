@@ -122,7 +122,7 @@ class Subsets:
          Returns
             list[list] | dict[tuple : None]"""
         loo_set = list()
-        for l in range(start = len(elements), stop = len(elements) + 1):
+        for l in range(len(elements) - 1, len(elements) + 1):
             for subset in itertools.combinations(elements, l):
                 loo_set.append(list(subset))
         

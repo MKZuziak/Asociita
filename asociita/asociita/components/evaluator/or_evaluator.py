@@ -23,6 +23,7 @@ class OR_Evaluator():
             None"""
         self.settings = settings
         self.evaluation = settings['evaluation']
+        self.shapley_or_recon = None
         
         # Creates coalitions for Shapley, if so indicated in the settings.
         if self.evaluation.get("Shapley_OR"):
@@ -98,7 +99,7 @@ class OR_Evaluator():
         
         # Upadting models of all possible coalitions in N
         for coalition in self.loo_or_recon:
-            model_s_t = self.shapley_or_recon[coalition]
+            model_s_t = self.loo_or_recon[coalition]
             delta_s_t = delta_s[coalition]
             updated_weights = Optimizers.SimpleFedopt(weights=model_s_t.get_weights(),
                                                       delta=delta_s_t,

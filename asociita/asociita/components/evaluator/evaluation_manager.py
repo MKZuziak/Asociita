@@ -9,6 +9,7 @@ class Evaluation_Manager():
         """Manages the process of evaluation. Creates an instance of 
         Evaluation_Manager object, that controls all the instances
         that perform evaluation.
+        
         -------------
         Args
             settings (dict): dictionary object cotaining all the settings of the Evaluation_Manager.
@@ -39,6 +40,7 @@ class Evaluation_Manager():
         """Tracks the models' gradinets for the One Round Evaluator.
         Specifically, reconstruct gradients for every possible coalition
         of interest.
+        
         -------------
         Args
             gradients (dict): Dictionary mapping each node to its respective gradients.
@@ -53,6 +55,7 @@ class Evaluation_Manager():
 
     def calculate_results(self) -> dict[str:dict] | None:
         """Calculate results for each contribution analysis method. 
+        
         -------------
         Args
             None
