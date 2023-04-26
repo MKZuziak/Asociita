@@ -1,16 +1,17 @@
+# PARENT CLASS IMPORT
 from asociita.components.orchestrator.generic_orchestrator import Orchestrator # Parent class import
-import datasets, copy
-from typing import Any, Union
-from asociita.components.nodes.federated_node import FederatedNode
-from asociita.models.pytorch.federated_model import FederatedModel
+# LIBRARY MODULES IMPORT
+from asociita.utils.orchestrations import create_nodes, sample_nodes, train_nodes
 from asociita.utils.computations import Aggregators
 from asociita.utils.handlers import Handler
 from asociita.utils.loggers import Loggers
-from asociita.utils.orchestrations import prepare_nodes, create_nodes, check_health, sample_nodes, train_nodes
+from asociita.utils.orchestrations import create_nodes, sample_nodes, train_nodes
 from asociita.utils.optimizers import Optimizers
 from asociita.components.evaluator.evaluation_manager import Evaluation_Manager
+# ADDITIONAL IMPORTS
+import datasets, copy
 from multiprocessing import Pool, Manager
-from torch import nn
+
 
 orchestrator_logger = Loggers.orchestrator_logger()
 
