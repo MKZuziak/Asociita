@@ -133,6 +133,7 @@ class OR_Evaluator():
                     model_without_i = self.shapley_or_recon[subset_without_i]
                     score_without_i = model_without_i.evaluate_model()[1]
                     self.recorded_values[subset_without_i] = score_without_i
+                    print(f"Coalition of {subset_without_i} scored {self.recorded_values[subset_without_i]}")
                     operation_counter += 1
 
                 if subset_with_i in self.recorded_values:
@@ -142,10 +143,27 @@ class OR_Evaluator():
                     model_with_i = self.shapley_or_recon[subset_with_i]
                     score_with_i = model_with_i.evaluate_model()[1]
                     self.recorded_values[subset_with_i] = score_with_i
+                    print(f"Coalition of {subset_with_i} scored {self.recorded_values[subset_with_i]}")
                     operation_counter += 1
                 
                 summand = (score_with_i - score_without_i) /  math.comb((N-1), len(subset))
                 shapley_value += summand
+
+            # One last summand - empty set
+            score_without_i = float(1 / self.settings['number_of_classes']) # score of an empty set - a random guess
+            subset_with_i = (node, )
+            if subset_with_i in self.recorded_values:
+                    score_with_i = self.recorded_values[subset_with_i]
+            else:
+                print(f"{operation_counter} of {number_of_operations}: forming and evaluating subset {subset_with_i}")
+                model_with_i = self.shapley_or_recon[subset_with_i]
+                score_with_i = model_with_i.evaluate_model()[1]
+                self.recorded_values[subset_with_i] = score_with_i
+                print(f"Coalition of {subset_with_i} scored {self.recorded_values[subset_with_i]}")
+                operation_counter += 1
+            
+            summand = (score_with_i - score_without_i) /  math.comb((N-1), len(subset))
+            shapley_value += summand
             
             self.shapley_values[node] = shapley_value
     
