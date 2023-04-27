@@ -16,9 +16,10 @@ if __name__ == "__main__":
     # CONFIGURATION: Dataset configuration
     data_settings = {
             "dataset_name" : 'mnist',
-            "split_type" : 'random_uniform',
-            "shards": 5,
-            "local_test_size": 0.2}
+            "split_type" : 'blocks',
+            "shards": 2,
+            "local_test_size": 0.2,
+            "agents": 4}
     
 
     # DATA: Loading the data

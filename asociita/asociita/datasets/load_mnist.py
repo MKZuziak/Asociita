@@ -1,5 +1,6 @@
 import datasets
 from datasets import load_dataset
+import copy
 
 def load_mnist(settings: dict) -> list[datasets.arrow_dataset.Dataset,
                                        list[list[list[datasets.arrow_dataset.Dataset]]]]:
@@ -43,5 +44,21 @@ def load_mnist(settings: dict) -> list[datasets.arrow_dataset.Dataset,
             nodes_data.append([agent_data['train'], agent_data['test']])
     
     
+    # Type: Same Dataset -> One dataset copied n times.
+    elif settings['split_type'] == 'same_dataset':
+        agent_data = dataset.shard(num_shards=1, index=0)
+        agent_data = agent_data.train_test_split(test_size=settings["local_test_size"])
+        for _ in range(settings['agents']):
+            nodes_data.append([copy.deepcopy(agent_data['train']), copy.deepcopy(agent_data['test'])])
+    
+
+    # Type: Blocks - One dataset copied inside one block (cluster)
+    elif settings['split_type'] == 'blocks':
+        for shard in range(settings['shards']):
+            agent_data = dataset.shard(num_shards=settings['shards'], index=shard)
+            agent_data = agent_data.train_test_split(test_size=settings["local_test_size"])
+            for _ in range((int(settings['agents'] / settings['shards']))):
+                nodes_data.append([copy.deepcopy(agent_data['train']), copy.deepcopy(agent_data['test'])])
+
     return [orchestrator_data, nodes_data]
             
