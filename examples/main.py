@@ -6,17 +6,18 @@ from asociita.models.pytorch.mnist import MnistNet
 from asociita.datasets.fetch_data import load_data
 from asociita.utils.helpers import Helpers
 import os
+import time
 
 if __name__ == "__main__":
     # CONFIGURATION: Training configuration
-    save_path = os.path.join(os.getcwd(), r'examples', r'metrics_fedopt.csv')
+    save_path = os.path.join(os.getcwd(), r'examples')
     settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'Contribution_example.json'))
-    settings["orchestrator"]['save_path'] = os.path.join(os.getcwd(), 'examples', 'metrics.csv')
+    settings["orchestrator"]['save_path'] = save_path
     # CONFIGURATION: Dataset configuration
     data_settings = {
             "dataset_name" : 'mnist',
             "split_type" : 'random_uniform',
-            "shards": 10,
+            "shards": 5,
             "local_test_size": 0.2}
     
 
@@ -31,7 +32,7 @@ if __name__ == "__main__":
     # MODEL: Using utils to retrieve a model
     model = MnistNet()
     
-    
+    st = time.time()
     # SIMULATION: Creating an Orchestrator object
     orchestrator = Evaluator_Orchestrator(settings=settings)
     # SIMULATION: Loading the model onto the orchestrator
@@ -41,6 +42,9 @@ if __name__ == "__main__":
     # TRAINING PHASE: running the training protocol.
     #orchestrator.fed_avg(nodes_data=nodes_data)
     orchestrator.train_protocol(nodes_data=nodes_data)
+    et = time.time()
+    elapsed_time = et - st
+    print(f"Execution time: {elapsed_time}, seconds")
 
     # Checking the model
     #model = orchestrator.central_model

@@ -1,6 +1,7 @@
 from asociita.components.nodes.federated_node import FederatedNode
 import logging, csv
 from typing import Any
+import os
 
 class Handler:
     """Common class for various utilities handling the data logs."""
@@ -44,7 +45,8 @@ class Handler:
     def save_model_metrics(iteration: int, 
                            model: Any,
                            logger = None,
-                           saving_path = None,
+                           saving_path: str = None,
+                           file_name: str = 'metrics.csv',
                            log_to_screen: bool = False) -> None:
         """Used to save the model metrics.
         Args:
@@ -56,6 +58,8 @@ class Handler:
             - saving_path (str or path-like object): the saving path of the
                 csv file - if none, the file will be saved in the current 
                 working directory.
+            - file_name (str): a desired file name for the metrics, default to
+                'metrics.csv'.
         Returns:
             None"""
         try:
@@ -82,7 +86,7 @@ class Handler:
                 logger.info(f"Evaluating model after iteration {iteration} on node {model.node_name}. Results: {metrics}")
         except Exception as e:
             logger.warning(f"Unable to compute metrics. {e}")
-        
-        with open(saving_path, 'a+', newline='') as saved_file:
+        path = os.path.join(saving_path, file_name)
+        with open(path, 'a+', newline='') as saved_file:
                 writer = csv.DictWriter(saved_file, list(metrics.keys()))
                 writer.writerow(metrics)

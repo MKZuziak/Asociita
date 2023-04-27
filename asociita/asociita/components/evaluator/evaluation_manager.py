@@ -1,5 +1,7 @@
 from asociita.components.evaluator.or_evaluator import OR_Evaluator
 from asociita.models.pytorch.federated_model import FederatedModel
+import os
+import csv
 
 
 class Evaluation_Manager():
@@ -53,22 +55,65 @@ class Evaluation_Manager():
             self.or_evaluator.track_loo(gradients=gradients)
     
 
-    def calculate_results(self) -> dict[str:dict] | None:
+    def calculate_results(self,
+                          map_results:bool = True) -> dict[str:dict] | None:
         """Calculate results for each contribution analysis method. 
         
         -------------
         Args
-            None
+            map_results (bool): If set to true, the method will map results
+                of the evaluation to each node and will return an additionall
+                dictionary of the format: {node_id: {method:score, method:score}}
        -------------
          Returns
             results | None"""
         results = {}
+        if map_results:
+            mapped_results = {node: {'node_number': node} for node in self.settings['nodes']}
+        
         if self.flag_shap_or:
             self.or_evaluator.calculate_shaply()
             results["Shapley_OneRound"] = self.or_evaluator.shapley_values
+            if map_results:
+                for node, result in zip(mapped_results, results['Shapley_OneRound'].values()):
+                    mapped_results[node]["shapley_one_round"] = result
+
         
         if self.flag_loo_or:
             self.or_evaluator.calculate_loo()
             results["LOO_OneRound"] = self.or_evaluator.loo_values
+            if map_results:
+                for node, result in zip(mapped_results, results['LOO_OneRound'].values()):
+                    mapped_results[node]['leave_one_out_one_round'] = result
         
-        return results
+        if mapped_results:
+            return (results, mapped_results)
+        else:
+            return results
+
+
+    def save_results(self,
+                     path: str,
+                     mapped_results: str,
+                     file_name: str = 'contribution_results') -> None:
+        """Preserves metrics of every contribution index calculated by the manager
+        in a csv file.
+        -------------
+        Args
+            path (str): a path to the directory in which the file should be saved.
+            mapped_results: results mapped to each note, stored in a dictionary
+                of a format {node_id: {method:score, method:score}
+            file_name (str): a proper filename with .csv ending. Default is
+                "contribution.results.csv
+       -------------
+         Returns
+            results | None"""
+        file_name = 'contribution_results.csv'
+        path = os.path.join(path, file_name)
+        with open(path, 'w', newline='') as csvfile:
+            header = [column_name for column_name in mapped_results[0].keys()]
+            writer = csv.DictWriter(csvfile, fieldnames=header)
+
+            writer.writeheader()
+            for row in mapped_results.values():
+                writer.writerow(row)

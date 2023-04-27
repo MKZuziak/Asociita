@@ -134,8 +134,11 @@ class Evaluator_Orchestrator(Orchestrator):
         
         # 4. FINALIZING PHASE
         # EVALUATING THE RESULTS
-        evaluation_results = evaluation_maanger.calculate_results()
+        evaluation_results, mapped_results = evaluation_maanger.calculate_results()
         
         # FINAL MESSAGES
         print(evaluation_results)
+        print(mapped_results)
+        evaluation_maanger.save_results(path = save_path,
+                                        mapped_results=mapped_results)
         orchestrator_logger.critical("Training complete")
