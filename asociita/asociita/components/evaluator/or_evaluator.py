@@ -150,7 +150,7 @@ class OR_Evaluator():
                 shapley_value += summand
 
             # One last summand - empty set
-            score_without_i = float(1 / self.settings['number_of_classes']) # score of an empty set - a random guess
+            score_without_i = float(0) # since v(empty_set) = 0
             subset_with_i = (node, )
             if subset_with_i in self.recorded_values:
                     score_with_i = self.recorded_values[subset_with_i]
@@ -165,7 +165,7 @@ class OR_Evaluator():
             summand = (score_with_i - score_without_i) /  math.comb((N-1), len(subset))
             shapley_value += summand
             
-            self.shapley_values[node] = shapley_value
+            self.shapley_values[node] = (shapley_value / self.settings['number_of_nodes'])
     
 
     def calculate_loo(self):

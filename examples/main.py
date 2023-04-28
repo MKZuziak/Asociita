@@ -16,7 +16,7 @@ if __name__ == "__main__":
     # CONFIGURATION: Dataset configuration
     data_settings = {
             "dataset_name" : 'mnist',
-            "split_type" : 'blocks',
+            "split_type" : 'same_dataset',
             "shards": 2,
             "local_test_size": 0.2,
             "agents": 4}
