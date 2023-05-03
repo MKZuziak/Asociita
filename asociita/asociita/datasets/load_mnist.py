@@ -1,5 +1,6 @@
 import datasets
 from datasets import load_dataset
+from asociita.datasets.shard_transformation import Shard_Transformation
 import copy
 
 def load_mnist(settings: dict) -> list[datasets.arrow_dataset.Dataset,
@@ -39,10 +40,13 @@ def load_mnist(settings: dict) -> list[datasets.arrow_dataset.Dataset,
     if settings['split_type'] == 'random_uniform':
         for shard in range(settings['shards']):
             agent_data = dataset.shard(num_shards=settings['shards'], index=shard)
+            # Shard transformation
+            if shard in settings['transformations'].keys():
+                agent_data = Shard_Transformation.transform(agent_data, preferences=settings['transformations'][shard]) # CALL SHARD_TRANSFORMATION CLASS
+            
             # In-shard split between test and train data.
             agent_data = agent_data.train_test_split(test_size=settings["local_test_size"])
             nodes_data.append([agent_data['train'], agent_data['test']])
-    
     
     # Type: Same Dataset -> One dataset copied n times.
     elif settings['split_type'] == 'same_dataset':

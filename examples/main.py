@@ -16,9 +16,11 @@ if __name__ == "__main__":
     # CONFIGURATION: Dataset configuration
     data_settings = {
             "dataset_name" : 'mnist',
-            "split_type" : 'same_dataset',
-            "shards": 2,
+            "split_type" : 'random_uniform',
+            "shards": 4,
             "local_test_size": 0.2,
+            "transformations": {1: 'blur',
+                                2: 'rotation'},
             "agents": 4}
     
 
