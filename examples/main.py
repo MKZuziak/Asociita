@@ -19,7 +19,11 @@ if __name__ == "__main__":
             "split_type" : 'random_uniform',
             "shards": 4,
             "local_test_size": 0.2,
-            "transformations": {1: 'perspective_change'},
+            "transformations": {0: 'noise',
+                                1: 'blur',
+                                2: 'rotation',
+                                3: 'perspective_change'},
+            "save_transformations": True,
             "agents": 4}
     
 
