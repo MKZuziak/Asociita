@@ -19,8 +19,7 @@ if __name__ == "__main__":
             "split_type" : 'random_uniform',
             "shards": 4,
             "local_test_size": 0.2,
-            "transformations": {1: 'blur',
-                                2: 'rotation'},
+            "transformations": {3: 'noise'},
             "agents": 4}
     
 
