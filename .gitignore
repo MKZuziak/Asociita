@@ -160,3 +160,7 @@ metrics_fedavg.csv
 examples/contribution_results.csv
 examples/contribution_results.csv
 examples/contribution_results.csv
+blur.pdf
+noise.pdf
+perspective_change.pdf
+rotation.pdf
