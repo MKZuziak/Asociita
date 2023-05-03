@@ -1,5 +1,5 @@
 from typing import Any
-from torchvision.transforms import Compose, GaussianBlur, RandomRotation, ToTensor, ToPILImage
+from torchvision.transforms import Compose, GaussianBlur, RandomRotation, ToTensor, ToPILImage, RandomPerspective
 import torch.random
 from asociita.utils.custom_transformations import AddGaussianNoise
 
@@ -18,7 +18,7 @@ def rotate_img(shard):
     shard['image'] = rotater(shard['image'])
     return shard
 
-
+# Custom pipeline and function to noise the image
 noiser = Compose([
     ToTensor(),
     AddGaussianNoise(150., 250.),
@@ -26,6 +26,14 @@ noiser = Compose([
 ])
 def noise_img(shard):
     shard['image'] = noiser(shard['image'])
+    return shard
+
+# Custom pipeline and function to apply random perspective
+perspective = Compose([
+    RandomPerspective(distortion_scale=0.6, p=1.0)
+])
+def perspective_img(shard):
+    shard['image'] = perspective(shard['image'])
     return shard
 
 
@@ -40,6 +48,11 @@ class Shard_Transformation:
             return Shard_Transformation.blur(shard)
         elif preferences == 'rotation':
             return Shard_Transformation.rotate(shard)
+        elif preferences == 'perspective_change':
+            return Shard_Transformation.change_perspective(shard)
+        else:
+            print("Invalid key-word argument")
+            return shard
     
 
     def noise(shard):
@@ -54,4 +67,9 @@ class Shard_Transformation:
 
     def rotate(shard):
         shard = shard.map(rotate_img)
+        return shard
+    
+
+    def change_perspective(shard):
+        shard = shard.map(perspective_img)
         return shard
