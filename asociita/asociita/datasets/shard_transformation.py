@@ -1,39 +1,48 @@
 from typing import Any
 from torchvision.transforms import Compose, GaussianBlur, RandomRotation, ToTensor, ToPILImage, RandomPerspective
-import torch.random
 from asociita.utils.custom_transformations import AddGaussianNoise
+from datasets import arrow_dataset
 
 # Custom pipeline and fucntion to blur the image.
+# Pipeline
 blurer = Compose([
     GaussianBlur(kernel_size=(5, 9), sigma=(0.9, 50))
     ])
-def blur_img(shard):
-    shard['image'] = blurer(shard['image'])
+# Transforming function
+def blur_img(shard: arrow_dataset.Dataset) -> arrow_dataset.Dataset:
+    shard['image'] = [blurer(image) for image in shard['image']]
+    return shard
 
 # Custom pipeline and function to rotate the image.
+# Pipeline
 rotater = Compose([
     RandomRotation(degrees=(0, 270))
     ])
-def rotate_img(shard):
-    shard['image'] = rotater(shard['image'])
+# Transform function
+def rotate_img(shard: arrow_dataset.Dataset) -> arrow_dataset.Dataset:
+    shard['image'] = [rotater(image) for image in shard['image']]
     return shard
 
 # Custom pipeline and function to noise the image
+# Pipeline
 noiser = Compose([
     ToTensor(),
     AddGaussianNoise(150., 250.),
     ToPILImage()
 ])
-def noise_img(shard):
-    shard['image'] = noiser(shard['image'])
+# Transform function
+def noise_img(shard: arrow_dataset.Dataset) -> arrow_dataset.Dataset:
+    shard['image'] = [noiser(image) for image in shard['image']]
     return shard
 
 # Custom pipeline and function to apply random perspective
+# Pipeline
 perspective = Compose([
     RandomPerspective(distortion_scale=0.6, p=1.0)
 ])
-def perspective_img(shard):
-    shard['image'] = perspective(shard['image'])
+# Transform function
+def perspective_img(shard: arrow_dataset.Dataset) -> arrow_dataset.Dataset:
+    shard['image'] = [perspective(image) for image in shard['image']]
     return shard
 
 
@@ -41,7 +50,15 @@ class Shard_Transformation:
     '''A common class for a set of transformation static methods 
     that can be applied to a shard.'''
     @staticmethod
-    def transform(shard, preferences):
+    def transform(shard: arrow_dataset.Dataset, preferences: str) -> arrow_dataset.Dataset:
+        """Performes transformation of the provided shard according to the preferences.
+        -------------
+        Args
+            shard (arrow_dataset.Dataset): shard to be transformed.
+            preferences (str): type of transformation that should be applied.
+       -------------
+        Returns
+            arrow_dataset.Dataset"""
         if preferences == 'noise':
             return Shard_Transformation.noise(shard)            
         elif preferences == 'blur':
@@ -55,21 +72,25 @@ class Shard_Transformation:
             return shard
     
 
-    def noise(shard):
-        shard = shard.map()
+    @staticmethod
+    def noise(shard: arrow_dataset.Dataset) -> arrow_dataset.Dataset:
+        shard = shard.map(noise_img, batched=True)
         return shard
     
 
-    def blur(shard):
-        shard = shard.map(blur_img)
+    @staticmethod
+    def blur(shard: arrow_dataset.Dataset) -> arrow_dataset.Dataset:
+        shard = shard.map(blur_img, batched = True)
         return shard
     
 
-    def rotate(shard):
-        shard = shard.map(rotate_img)
+    @staticmethod
+    def rotate(shard: arrow_dataset.Dataset) -> arrow_dataset.Dataset:
+        shard = shard.map(rotate_img, batched = True)
         return shard
     
 
-    def change_perspective(shard):
-        shard = shard.map(perspective_img)
+    @staticmethod
+    def change_perspective(shard: arrow_dataset.Dataset) -> arrow_dataset.Dataset:
+        shard = shard.map(perspective_img, batched = True)
         return shard

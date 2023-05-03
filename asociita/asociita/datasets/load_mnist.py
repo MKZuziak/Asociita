@@ -1,6 +1,7 @@
 import datasets
 from datasets import load_dataset
 from asociita.datasets.shard_transformation import Shard_Transformation
+from asociita.utils.showcase import save_random
 import copy
 
 def load_mnist(settings: dict) -> list[datasets.arrow_dataset.Dataset,
@@ -40,10 +41,15 @@ def load_mnist(settings: dict) -> list[datasets.arrow_dataset.Dataset,
     if settings['split_type'] == 'random_uniform':
         for shard in range(settings['shards']):
             agent_data = dataset.shard(num_shards=settings['shards'], index=shard)
+            
             # Shard transformation
             if shard in settings['transformations'].keys():
+                if settings['save_transformations']:
+                    original_imgs = copy.deepcopy(agent_data['image'])
                 agent_data = Shard_Transformation.transform(agent_data, preferences=settings['transformations'][shard]) # CALL SHARD_TRANSFORMATION CLASS
-            
+                if settings['save_transformations']:
+                    save_random(original_imgs, agent_data['image'], settings['transformations'][shard])
+
             # In-shard split between test and train data.
             agent_data = agent_data.train_test_split(test_size=settings["local_test_size"])
             nodes_data.append([agent_data['train'], agent_data['test']])
