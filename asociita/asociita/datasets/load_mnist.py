@@ -39,7 +39,7 @@ def load_mnist(settings: dict) -> list[datasets.arrow_dataset.Dataset,
     
     # Type: Random Uniform (Sharding) -> Same size, random distribution
     if settings['split_type'] == 'random_uniform':
-        for shard in range(settings['shards']):
+        for shard in range(settings['shards']): # Each shard corresponds to one
             agent_data = dataset.shard(num_shards=settings['shards'], index=shard)
             
             # Shard transformation

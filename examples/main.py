@@ -11,22 +11,9 @@ import time
 if __name__ == "__main__":
     # CONFIGURATION: Training configuration
     save_path = os.path.join(os.getcwd(), r'examples')
-    settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'Contribution_example.json'))
-    settings["orchestrator"]['save_path'] = save_path
-    # CONFIGURATION: Dataset configuration
-    data_settings = {
-            "dataset_name" : 'mnist',
-            "split_type" : 'random_uniform',
-            "shards": 4,
-            "local_test_size": 0.2,
-            "transformations": {0: 'noise',
-                                1: 'blur',
-                                2: 'rotation',
-                                3: 'perspective_change'},
-            "save_transformations": True,
-            "agents": 4}
-    
-
+    settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'simulation_configurations', 'Contribution_example.json'))
+    data_settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'dataset_configurations', 'Overview_example.json'), convert_keys=True)
+    settings["orchestrator"]["save_path"] = save_path
     # DATA: Loading the data
     data = load_data(data_settings)
     # DATA: Selecting data for the orchestrator
