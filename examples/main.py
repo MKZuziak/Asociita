@@ -11,8 +11,8 @@ import time
 if __name__ == "__main__":
     # CONFIGURATION: Training configuration
     save_path = os.path.join(os.getcwd(), r'examples')
-    settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'simulation_configurations', 'Contribution_example.json'))
-    data_settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'dataset_configurations', 'Overview_example.json'), convert_keys=True)
+    settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'simulation_configurations', 'FedAdagard_example.json'))
+    data_settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'dataset_configurations', 'Clean_example.json'), convert_keys=True)
     settings["orchestrator"]["save_path"] = save_path
     # DATA: Loading the data
     data = load_data(data_settings)
