@@ -30,7 +30,7 @@ class Orchestrator():
         self.node_settings = settings["nodes"]
         self.model = None
         if self.settings.get('metrics_filename'):
-            self.metrics_filename = settings['save_filename']
+            self.metrics_filename = settings['metrics_filename']
         else:
             self.metrics_filename = 'metrics.csv'
     
