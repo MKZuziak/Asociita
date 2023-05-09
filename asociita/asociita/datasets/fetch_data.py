@@ -1,6 +1,7 @@
 import logging
 import datasets
 from asociita.datasets.load_mnist import load_mnist
+import json
 
 def load_data(settings:dict) -> list[datasets.arrow_dataset.Dataset,
                                        list[list[list[datasets.arrow_dataset.Dataset]]]]:
@@ -29,7 +30,12 @@ def load_data(settings:dict) -> list[datasets.arrow_dataset.Dataset,
     
     dataset_name = settings['dataset_name']
     if dataset_name == 'mnist':
-        return load_mnist(settings=settings)
+        loaded_dataset = load_mnist(settings=settings)
+        if settings['save_dataset'] == True:
+            json.dump(loaded_dataset)
+            return loaded_dataset
+        else:
+            return loaded_dataset
     else:
         logging.warning("Wrong name of the dataset. Please provide a valid name.")
        
