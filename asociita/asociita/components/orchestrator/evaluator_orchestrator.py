@@ -122,7 +122,8 @@ class Evaluator_Orchestrator(Orchestrator):
                         model = self.central_model,
                         logger = orchestrator_logger,
                         saving_path= save_path,
-                        log_to_screen=True) # PRESERVING METRICS FUNCTION -> CHANGE IF NEEDED
+                        log_to_screen=True,
+                        file_name=self.metrics_filename) # PRESERVING METRICS FUNCTION -> CHANGE IF NEEDED
                     
                     # LOGGING METRICS <- ONLY IF ENABLED IN SETTINGS
                     # Logging the metrics of sample or all nodes

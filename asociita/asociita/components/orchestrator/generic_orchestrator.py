@@ -29,6 +29,10 @@ class Orchestrator():
         self.settings = settings["orchestrator"] # Settings attribute (dict)
         self.node_settings = settings["nodes"]
         self.model = None
+        if self.settings.get('metrics_filename'):
+            self.metrics_filename = settings['save_filename']
+        else:
+            self.metrics_filename = 'metrics.csv'
     
 
     def prepare_orchestrator(self, 
@@ -206,7 +210,8 @@ class Orchestrator():
                             model = self.central_model,
                             logger = orchestrator_logger,
                             saving_path= save_path,
-                            log_to_screen=True) # PRESERVING METRICS FUNCTION -> CHANGE IF NEEDED
+                            log_to_screen=True,
+                            file_name = self.metrics_filename) # PRESERVING METRICS FUNCTION -> CHANGE IF NEEDED
                     
                     # LOGGING METRICS <- ONLY IF ENABLED IN SETTINGS
                     # Logging the metrics of sample or all nodes
