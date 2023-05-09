@@ -16,7 +16,7 @@ def blur_img(shard: arrow_dataset.Dataset) -> arrow_dataset.Dataset:
 # Custom pipeline and function to rotate the image.
 # Pipeline
 rotater = Compose([
-    RandomRotation(degrees=(0, 270))
+    RandomRotation(degrees=(0, 90))
     ])
 # Transform function
 def rotate_img(shard: arrow_dataset.Dataset) -> arrow_dataset.Dataset:
@@ -27,7 +27,7 @@ def rotate_img(shard: arrow_dataset.Dataset) -> arrow_dataset.Dataset:
 # Pipeline
 noiser = Compose([
     ToTensor(),
-    AddGaussianNoise(150., 250.),
+    AddGaussianNoise(0., 1.),
     ToPILImage()
 ])
 # Transform function
