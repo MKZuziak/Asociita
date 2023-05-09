@@ -165,3 +165,6 @@ noise.pdf
 perspective_change.pdf
 rotation.pdf
 examples/test_fily.py
+examples/results/baseline_run.csv
+examples/preserved_datasets.pickle
+examples/test_file.py
