@@ -39,7 +39,7 @@ def rotate_img(shard: arrow_dataset.Dataset,
 
 
 def noise_img(shard: arrow_dataset.Dataset,
-              noise_multiplyer: float = 0.10) -> arrow_dataset.Dataset:
+              noise_multiplyer: float = 0.005) -> arrow_dataset.Dataset:
     """Add gausian noise to the dataset.
     -------------
     Args
