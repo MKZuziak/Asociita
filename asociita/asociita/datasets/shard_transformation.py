@@ -3,45 +3,75 @@ from torchvision.transforms import Compose, GaussianBlur, RandomRotation, ToTens
 from asociita.utils.custom_transformations import AddGaussianNoise
 from datasets import arrow_dataset
 
-# Custom pipeline and fucntion to blur the image.
-# Pipeline
-blurer = Compose([
-    GaussianBlur(kernel_size=(5, 9), sigma=(0.9, 50))
+
+def blur_img(shard: arrow_dataset.Dataset,
+             kernel_size: tuple[int, int]=(1, 3),
+             sigma: tuple[float, float]=(1., 10.)) -> arrow_dataset.Dataset:
+    """Blurs the given dataset.
+        -------------
+        Args
+            kernel_size (tuple[int, int]) - size of the Gaussian kernel
+            sigma (tuple[float, float]) - SD to be used to creating kernel to perform blurring, uniformly at [min, max]
+       -------------
+         Returns
+            arrow_dataset.Dataset"""
+    blurer = Compose([
+    GaussianBlur(kernel_size=kernel_size, sigma=sigma)
     ])
-# Transforming function
-def blur_img(shard: arrow_dataset.Dataset) -> arrow_dataset.Dataset:
     shard['image'] = [blurer(image) for image in shard['image']]
     return shard
 
-# Custom pipeline and function to rotate the image.
-# Pipeline
-rotater = Compose([
-    RandomRotation(degrees=(0, 90))
+
+def rotate_img(shard: arrow_dataset.Dataset,
+               degrees: tuple[int, int] = (0, 45)) -> arrow_dataset.Dataset:
+    """Rotates the given dataset.
+    -------------
+    Args
+        degrees (tuple[int, int]): the range expressed in degress to which the image can be rotated.
+    -------------
+    Returns
+        arrow_dataset.Dataset"""
+    rotater = Compose([
+    RandomRotation(degrees=degrees)
     ])
-# Transform function
-def rotate_img(shard: arrow_dataset.Dataset) -> arrow_dataset.Dataset:
     shard['image'] = [rotater(image) for image in shard['image']]
     return shard
 
-# Custom pipeline and function to noise the image
-# Pipeline
-noiser = Compose([
+
+def noise_img(shard: arrow_dataset.Dataset,
+              noise_multiplyer: float = 0.10) -> arrow_dataset.Dataset:
+    """Add gausian noise to the dataset.
+    -------------
+    Args
+        noise_multiplyer (float): Noise multiplication (higher rates implicates adding more noise)
+    -------------
+    Returns
+        arrow_dataset.Dataset"""
+    noiser = Compose([
     ToTensor(),
-    AddGaussianNoise(0., 1.),
+    AddGaussianNoise(mean = 0., 
+                     std = 1.,
+                     noise_multiplication = noise_multiplyer),
     ToPILImage()
-])
-# Transform function
-def noise_img(shard: arrow_dataset.Dataset) -> arrow_dataset.Dataset:
+    ])  
     shard['image'] = [noiser(image) for image in shard['image']]
     return shard
 
-# Custom pipeline and function to apply random perspective
-# Pipeline
-perspective = Compose([
-    RandomPerspective(distortion_scale=0.6, p=1.0)
-])
-# Transform function
-def perspective_img(shard: arrow_dataset.Dataset) -> arrow_dataset.Dataset:
+
+def perspective_img(shard: arrow_dataset.Dataset,
+                    distortion_scale: float =  0.5,
+                    transformation_probability: float = 0.5) -> arrow_dataset.Dataset:
+    """Changes the perspective of the images in the dataset.
+    -------------
+    Args
+        distortion_scale (float): argument to control the degree of distortion and ranges from 0 to 1.
+        transformation_probability (float): probability of the image being transformed.
+    -------------
+    Returns
+        arrow_dataset.Dataset"""
+    perspective = Compose([
+    RandomPerspective(distortion_scale=distortion_scale, p=transformation_probability)
+    ])
     shard['image'] = [perspective(image) for image in shard['image']]
     return shard
 

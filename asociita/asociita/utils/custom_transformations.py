@@ -3,13 +3,18 @@ import torch.random
 
 
 class AddGaussianNoise(object):
-    def __init__(self, mean=0., std=1.) -> None:
+    def __init__(self, 
+                 mean=0., 
+                 std=1.,
+                 noise_multiplication: float = 0.5) -> None:
         self.std = std
         self.mean = mean
+        self.noise_multiplication = noise_multiplication
     
 
-    def __call__(self, tensor) -> Any:
-        return tensor + torch.randn(tensor.size()) * self.std + self.mean
+    def __call__(self, 
+                 tensor) -> Any:
+        return tensor + self.noise_multiplication * (torch.randn(tensor.size()) * self.std + self.mean)
     
 
     def __repr__(self) -> str:
