@@ -3,6 +3,7 @@ from datasets import load_dataset
 from asociita.datasets.shard_transformation import Shard_Transformation
 from asociita.utils.showcase import save_random
 import copy
+import pandas as pd
 
 def load_mnist(settings: dict) -> list[datasets.arrow_dataset.Dataset,
                                        list[list[list[datasets.arrow_dataset.Dataset]]]]:
@@ -37,6 +38,7 @@ def load_mnist(settings: dict) -> list[datasets.arrow_dataset.Dataset,
     # List datasets for all nodes.
     nodes_data = []
     
+    
     # Type: Random Uniform (Sharding) -> Same size, random distribution
     if settings['split_type'] == 'random_uniform':
         for shard in range(settings['shards']): # Each shard corresponds to one
@@ -54,6 +56,34 @@ def load_mnist(settings: dict) -> list[datasets.arrow_dataset.Dataset,
             agent_data = agent_data.train_test_split(test_size=settings["local_test_size"])
             nodes_data.append([agent_data['train'], agent_data['test']])
     
+
+    # Type: Uniform with Imbalanced Classes -> Samze size, different (random) distributions with heavy imbalance on selected clients
+    if settings['split_type'] == 'random_imbalanced':
+        imbalanced_clients = settings['imbalanced_clients']
+        agents = settings['agents']
+        pandas_df = dataset.to_pandas().drop('image', axis=1)
+        labels = sorted(pandas_df.label.unique())
+        samples = int(len(dataset) / agents)
+
+        for client in range(agents):
+            # Step I - sampling indexes
+            if client in imbalanced_clients:
+                sampling_weights = {key: (1 - imbalanced_clients[client][1]) / (len(labels) - 1) for key in labels}
+                sampling_weights[imbalanced_clients[client][0]] = imbalanced_clients[client][1]    
+            else:
+                sampling_weights = {key : (1 / len(labels)) for key in labels}
+            pandas_df["weights"] = pandas_df['label'].apply(lambda x: sampling_weights[x])
+            sample = pandas_df.sample(n=samples, weights='weights', random_state=42)
+
+            # Step II: selecting indexes and performing test - train split.
+            sampled_data = dataset.filter(lambda filter, idx: idx in list(sample.index), with_indices=True)
+            agent_data = sampled_data.train_test_split(test_size=settings["local_test_size"])
+            nodes_data.append([agent_data['train'], agent_data['test']])
+            
+            # Step III: Removing samples indexes
+            pandas_df.drop(sample.index, inplace=True)
+
+
     # Type: Same Dataset -> One dataset copied n times.
     elif settings['split_type'] == 'same_dataset':
         agent_data = dataset.shard(num_shards=1, index=0)
