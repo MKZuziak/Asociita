@@ -1,0 +1,11 @@
+{
+    "dataset_name" : "mnist",
+    "split_type" : "random_imbalanced",
+    "shards": 4,
+    "local_test_size": 0.2,
+    "transformations": {},
+    "imbalanced_clients": {"1": [1, 0.6],
+                            "2": [5, 0.9]},
+    "save_dataset": true,
+    "save_transformations": true,
+    "agents": 4}
