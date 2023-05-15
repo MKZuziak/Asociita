@@ -1,9 +1,0 @@
-{
-    "dataset_name" : "mnist",
-    "split_type" : "random_uniform",
-    "shards": 4,
-    "local_test_size": 0.2,
-    "transformations": {},
-    "save_dataset": true,
-    "save_transformations": true,
-    "agents": 4}
