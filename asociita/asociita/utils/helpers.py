@@ -8,4 +8,5 @@ class Helpers:
             data = json.load(json_file)
         if convert_keys == True:
             data['transformations'] = {int(key): value for key, value in data['transformations'].items()}
+            data['imbalanced_clients'] = {int(key): value for key, value in data['imbalanced_clients'].items()}
         return data
