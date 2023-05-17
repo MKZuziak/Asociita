@@ -15,6 +15,7 @@
                         "LOO_OR": true},
         "training_evaluation": "log_and_save",
         "nodes_evaluation": "log_and_save",
+        "model_preservation": "full",
         "save_metrics": true,
         "save_models": false,
         "save_path": 0,
