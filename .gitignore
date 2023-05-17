@@ -172,3 +172,13 @@ examples/distribution_blueprint.csv
 examples/nodes_metrics.csv
 examples/training_metrics.csv
 examples/datasets/MNIST_4_dataset
+examples/models/nodes_models/node_0_iteration_0.pt
+examples/models/nodes_models/node_0_iteration_1.pt
+examples/models/nodes_models/node_1_iteration_0.pt
+examples/models/nodes_models/node_1_iteration_1.pt
+examples/models/nodes_models/node_2_iteration_0.pt
+examples/models/nodes_models/node_2_iteration_1.pt
+examples/models/nodes_models/node_3_iteration_0.pt
+examples/models/nodes_models/node_3_iteration_1.pt
+examples/models/orchestrator_models/node_orchestrator_iteration_0.pt
+examples/models/orchestrator_models/node_orchestrator_iteration_1.pt
