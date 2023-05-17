@@ -73,7 +73,9 @@ class Handler:
                 true_positive_rate,
                 false_positive_rate
             ) = model.evaluate_model()
-            metrics = {"loss":loss, 
+            metrics = {"epoch": iteration,
+                       "node": model.node_name,
+                        "loss":loss, 
                         "accuracy": accuracy, 
                         "fscore": fscore, 
                         "precision": precision,
@@ -89,4 +91,19 @@ class Handler:
         path = os.path.join(saving_path, file_name)
         with open(path, 'a+', newline='') as saved_file:
                 writer = csv.DictWriter(saved_file, list(metrics.keys()))
+                if os.path.getsize(path) == 0:
+                    writer.writeheader()
                 writer.writerow(metrics)
+    
+    
+    @staticmethod
+    def save_csv_file(file,
+                      saving_path: str = None,
+                      file_name: str = 'metrics.csv') -> None:
+        """Used to preserve the content of a csv file."""
+        path = os.path.join(saving_path, file_name)
+        with open(path, 'a+', newline='') as csv_file:
+            writer = csv.DictWriter(csv_file, list(file[0].keys()))
+            writer.writeheader()
+            for row in file:
+                writer.writerow(row)

@@ -29,10 +29,14 @@ class Orchestrator():
         self.settings = settings["orchestrator"] # Settings attribute (dict)
         self.node_settings = settings["nodes"]
         self.model = None
-        if self.settings.get('metrics_filename'):
-            self.metrics_filename = self.settings['metrics_filename']
+        if self.settings.get('training_metrics'):
+            self.training_metrics_filename = self.settings['training_metrics']
         else:
-            self.metrics_filename = 'metrics.csv'
+            self.training_metrics_filename = 'training_metrics.csv'
+        if self.settings.get('nodes_metrics'):
+            self.nodes_metrics_filename = self.settings['nodes_metrics']
+        else:
+            self.nodes_metrics_filename = 'nodes_metrics.csv'
     
 
     def prepare_orchestrator(self, 

@@ -1,6 +1,6 @@
 {
     "orchestrator": {
-        "iterations": 3,
+        "iterations": 2,
         "number_of_nodes": 4,
         "local_warm_start": false,
         "sample_size": 4,
@@ -13,6 +13,8 @@
             "tau": 0.001},
         "evaluation": {"Shapley_OR": true,
                         "LOO_OR": true},
+        "training_evaluation": "log_and_save",
+        "nodes_evaluation": "log_and_save",
         "save_metrics": true,
         "save_models": false,
         "save_path": 0,

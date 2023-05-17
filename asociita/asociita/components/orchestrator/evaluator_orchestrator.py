@@ -117,22 +117,39 @@ class Evaluator_Orchestrator(Orchestrator):
                     # Upadting the orchestrator
                     self.central_model.update_weights(updated_weights)
 
-                    # SAVING METRICS <- ONLY IF ENABLED IN SETTINGS
-                    Handler.save_model_metrics(iteration=iteration,
-                        model = self.central_model,
-                        logger = orchestrator_logger,
-                        saving_path= save_path,
-                        log_to_screen=True,
-                        file_name=self.metrics_filename) # PRESERVING METRICS FUNCTION -> CHANGE IF NEEDED
+                    # SAVING TRAINING METRICS <- ONLY IF ENABLED IN SETTINGS
+                    if self.settings['training_evaluation'] == 'log_and_save':
+                        Handler.save_model_metrics(iteration=iteration,
+                            model = self.central_model,
+                            logger = orchestrator_logger,
+                            saving_path = save_path,
+                            log_to_screen = True,
+                            file_name=self.training_metrics_filename) # PRESERVING METRICS FUNCTION -> CHANGE IF NEEDED
+                    elif self.settings['training_evaluation'] == 'log':
+                        Handler.log_model_metrics(iteration=iteration,
+                                                logger = orchestrator_logger,
+                                                model = self.central_model)
+                    else:
+                        orchestrator_logger.warning("No training metrics being preserved. To enable metric preservation add 'log_and_save' or 'log' to settings.")
                     
-                    # LOGGING METRICS <- ONLY IF ENABLED IN SETTINGS
-                    # Logging the metrics of sample or all nodes
-                    if self.settings['evaluation'] == "full":
+
+                    # SAVING NODES METRICS <- ONLY IF ENABLED IN SETTINGS
+                    if self.settings['nodes_evaluation'] == 'log_and_save':
                         for node in nodes_green:
-                            Handler.log_model_metrics(iteration=iteration,
+                            Handler.save_model_metrics(iteration=iteration,
                                 model = node.model,
-                                logger = orchestrator_logger) # LOGGING METRICS FUNCTION -> CHANGE IF NEEDED
-        
+                                logger = orchestrator_logger,
+                                saving_path = save_path,
+                                log_to_screen = True,
+                                file_name=self.nodes_metrics_filename) # PRESERVING METRICS FUNCTION -> CHANGE IF NEEDED
+                    elif self.settings['nodes_evaluation'] == 'log':
+                        for nodes in nodes_green:
+                            Handler.log_model_metrics(iteration=iteration,
+                                                    logger = orchestrator_logger,
+                                                    model = node.model)
+                    else:
+                        orchestrator_logger.warning("No nodes metrics being preserved. To enable metric preservation add 'log_and_save' or 'log' to settings.")
+                    
         # 4. FINALIZING PHASE
         # EVALUATING THE RESULTS
         evaluation_results, mapped_results = evaluation_maanger.calculate_results()

@@ -1,13 +1,12 @@
 {
     "dataset_name" : "mnist",
     "split_type" : "random_imbalanced",
-    "shards": 12,
+    "shards": 4,
     "local_test_size": 0.2,
     "transformations": {},
-    "imbalanced_clients": {"1": [1, 0.9],
-                            "2": [5, 0.9],
-                            "4": [9, 1.0],
-                            "5": [8, 1.0]},
+    "imbalanced_clients": {"1": [1, 0.9]},
     "save_dataset": true,
     "save_transformations": true,
-    "agents": 12}
+    "save_distribution": true,
+    "print_distribution": true,
+    "agents": 4}

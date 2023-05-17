@@ -2,6 +2,7 @@ import datasets
 from datasets import load_dataset
 from asociita.datasets.shard_transformation import Shard_Transformation
 from asociita.utils.showcase import save_random
+from asociita.utils.handlers import Handler
 import copy
 import pandas as pd
 import numpy as np
@@ -65,7 +66,15 @@ def load_mnist(settings: dict) -> list[datasets.arrow_dataset.Dataset,
         agents = [agent for agent in range(no_agents)]
         pandas_df = dataset.to_pandas().drop('image', axis=1)
         labels = sorted(pandas_df.label.unique())
+
+        save_distribution = False
+        print_distribution = False
         
+        if settings.get('save_distribution'):
+            distribution_blueprint = []
+            save_distribution = True
+        if settings.get('print_distribution'):
+            print_distribution = True
         if settings.get('custom_sample_size'):
             sample_size = settings['custom_sample_size']
         else:
@@ -86,9 +95,15 @@ def load_mnist(settings: dict) -> list[datasets.arrow_dataset.Dataset,
                 # 2. Apllying weights
                 pandas_df["weights"] = pandas_df['label'].apply(lambda x: sampling_weights[x])
                 sample = pandas_df.sample(n = sample_size, weights='weights', random_state=42)
-                counts = sample['label'].value_counts()
-                print(f"Distribution of client {agent} is : {counts}")
-
+                
+                counts = sample['label'].value_counts().sort_index()
+                if print_distribution:
+                    print(f"Distribution of client {agent} is : {counts}")
+                if save_distribution:
+                    ag = counts.to_dict()
+                    distribution = {'agent':agent}
+                    distribution.update(ag)
+                    distribution_blueprint.append(distribution)
                 # 3. Selecting indexes and performing test - train split.
                 sampled_data = dataset.filter(lambda filter, idx: idx in list(sample.index), with_indices=True)
                 agent_data = sampled_data.train_test_split(test_size=settings["local_test_size"])
@@ -105,15 +120,25 @@ def load_mnist(settings: dict) -> list[datasets.arrow_dataset.Dataset,
             if agent not in imbalanced_agents:
                 # 1. Sampling indexes
                 sample = pandas_df.sample(n = sample_size, random_state=42)
-                counts = sample['label'].value_counts()
-                print(f"Distribution of client {agent} is : {counts}")    
+                counts = sample['label'].value_counts().sort_index()
+                if print_distribution:
+                    print(f"Distribution of client {agent} is : {counts}")
+                if save_distribution:
+                    ag = counts.to_dict()
+                    distribution = {'agent':agent}
+                    distribution.update(ag)
+                    distribution_blueprint.append(distribution)
                 # 2. Selecting indexes and performing test - train split.
                 sampled_data = dataset.filter(lambda filter, idx: idx in list(sample.index), with_indices=True)
                 agent_data = sampled_data.train_test_split(test_size=settings["local_test_size"])
                 nodes_data[agent] = ([agent_data['train'], agent_data['test']])
                 # 3. Removing samples indexes
                 pandas_df.drop(sample.index, inplace=True)
-
+        
+        if save_distribution:
+            Handler.save_csv_file(file = distribution_blueprint,
+                                  saving_path=settings['save_path'],
+                                  file_name='distribution_blueprint.csv')
 
     # Type: Same Dataset -> One dataset copied n times.
     elif settings['split_type'] == 'same_dataset':
