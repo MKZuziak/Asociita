@@ -10,6 +10,7 @@ from typing import Any, Generic, Mapping, TypeVar, Union
 from torch import nn, optim
 from torchvision import transforms
 from sklearn.metrics import f1_score, recall_score, confusion_matrix, precision_score
+import os
 
 from asociita.utils.loggers import Loggers
 
@@ -218,7 +219,9 @@ class FederatedModel:
         self.net.load_state_dict(avg_tensors, strict=True)
 
 
-    def store_model_on_disk(self) -> None: #TODO
+    def store_model_on_disk(self,
+                            iteration: int,
+                            path: str) -> None: #TODO
         """This function is used to store the trained model
         on disk.
         Raises
@@ -226,12 +229,14 @@ class FederatedModel:
             Exception: if the model is not initialized it raises an exception
         """
         if self.net:
+            name = f"node_{self.node_name}_iteration_{iteration}.pt"
+            save_path = os.path.join(path, name)
             torch.save(
                 self.net.state_dict(),
-                "../model_results/model_" + self.node_name + ".pt",
+                save_path,
             )
         else:
-            raise NotYetInitializedFederatedLearningError
+            raise NotImplementedError
 
 
     def preserve_initial_model(self) -> None:

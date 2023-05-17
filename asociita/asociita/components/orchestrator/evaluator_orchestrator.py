@@ -149,6 +149,14 @@ class Evaluator_Orchestrator(Orchestrator):
                                                     model = node.model)
                     else:
                         orchestrator_logger.warning("No nodes metrics being preserved. To enable metric preservation add 'log_and_save' or 'log' to settings.")
+
+                    if self.settings['model_preservation'] == 'full':
+                        # Saving general model
+                        self.central_model.store_model_on_disk(iteration = iteration,
+                                                               path = self.settings['central_model_preservation_path'])
+                        for node in nodes_green:
+                            node.model.store_model_on_disk(iteration=iteration,
+                                                           path=self.settings['local_model_preservation_path'])
                     
         # 4. FINALIZING PHASE
         # EVALUATING THE RESULTS

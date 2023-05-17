@@ -14,6 +14,8 @@ if __name__ == "__main__":
     settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'simulation_configurations', 'Contribution_example.json'))
     data_settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'dataset_configurations', 'Random_Imbalanced_example.json'), convert_keys=True)
     settings["orchestrator"]["save_path"] = save_path
+    settings["orchestrator"]["central_model_preservation_path"] = os.path.join(os.getcwd(), 'examples', 'models', 'orchestrator_models')
+    settings["orchestrator"]["local_model_preservation_path"] = os.path.join(os.getcwd(), 'examples', 'models', 'nodes_models')
     data_settings['save_path'] = save_path
     data_settings['dataset_path'] = os.path.join(os.getcwd(), 'examples', 'datasets')
     # DATA: Loading the data
