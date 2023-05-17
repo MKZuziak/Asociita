@@ -15,6 +15,7 @@ if __name__ == "__main__":
     data_settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'dataset_configurations', 'Random_Imbalanced_example.json'), convert_keys=True)
     settings["orchestrator"]["save_path"] = save_path
     data_settings['save_path'] = save_path
+    data_settings['dataset_path'] = os.path.join(os.getcwd(), 'examples', 'datasets')
     # DATA: Loading the data
     data = load_data(data_settings)
     # DATA: Selecting data for the orchestrator
