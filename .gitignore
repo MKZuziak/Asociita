@@ -168,3 +168,7 @@ examples/test_fily.py
 examples/results/baseline_run.csv
 examples/preserved_datasets.pickle
 examples/test_file.py
+examples/distribution_blueprint.csv
+examples/nodes_metrics.csv
+examples/training_metrics.csv
+examples/datasets/MNIST_4_dataset
