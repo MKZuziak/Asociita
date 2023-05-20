@@ -182,3 +182,9 @@ examples/models/nodes_models/node_3_iteration_0.pt
 examples/models/nodes_models/node_3_iteration_1.pt
 examples/models/orchestrator_models/node_orchestrator_iteration_0.pt
 examples/models/orchestrator_models/node_orchestrator_iteration_1.pt
+examples/datasets/distribution_blueprint.csv
+examples/results/central_on_local.csv
+examples/results/node_orchestrator_iteration_0.pt
+examples/results/node_orchestrator_iteration_1.pt
+examples/results/node_orchestrator_iteration_2.pt
+examples/results/training_results.csv
