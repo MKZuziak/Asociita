@@ -11,13 +11,16 @@ import time
 if __name__ == "__main__":
     # CONFIGURATION: Training configuration
     save_path = os.path.join(os.getcwd(), r'examples')
-    settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'simulation_configurations', 'Contribution_example.json'))
+    settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'simulation_configurations', 'FedAdagard_example.json'))
     data_settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'dataset_configurations', 'Random_Imbalanced_example.json'), convert_keys=True)
-    settings["orchestrator"]["save_path"] = save_path
-    settings["orchestrator"]["central_model_preservation_path"] = os.path.join(os.getcwd(), 'examples', 'models', 'orchestrator_models')
-    settings["orchestrator"]["local_model_preservation_path"] = os.path.join(os.getcwd(), 'examples', 'models', 'nodes_models')
-    data_settings['save_path'] = save_path
-    data_settings['dataset_path'] = os.path.join(os.getcwd(), 'examples', 'datasets')
+    results_save_path = os.path.join(save_path, "results")
+    settings["orchestrator"]["metrics_save_path"] = results_save_path
+    settings["orchestrator"]["archiver"]["metrics_savepath"] = results_save_path
+    settings["orchestrator"]["archiver"]["orchestrator_filename"] = "training_results.csv"
+    settings["orchestrator"]["archiver"]["central_on_local_filename"] = "central_on_local.csv"
+    settings["orchestrator"]["archiver"]["orchestrator_model_save_path"] = results_save_path
+    settings["orchestrator"]["archiver"]["nodes_model_save_path"] = results_save_path
+    data_settings['save_path'] = os.path.join(os.getcwd(), 'examples', 'datasets')
     # DATA: Loading the data
     data = load_data(data_settings)
     # DATA: Selecting data for the orchestrator
@@ -31,7 +34,7 @@ if __name__ == "__main__":
     
     st = time.time()
     # SIMULATION: Creating an Orchestrator object
-    orchestrator = Evaluator_Orchestrator(settings=settings)
+    orchestrator = Orchestrator(settings=settings)
     # SIMULATION: Loading the model onto the orchestrator
     orchestrator.prepare_orchestrator(model=model, validation_data=orchestrator_data)
 

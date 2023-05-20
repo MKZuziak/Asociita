@@ -6,6 +6,7 @@ from asociita.utils.computations import Aggregators
 from asociita.utils.handlers import Handler
 from asociita.utils.loggers import Loggers
 from asociita.utils.orchestrations import prepare_nodes, create_nodes, check_health, sample_nodes, train_nodes
+from asociita.components.archiver.archive_manager import Archive_Manager
 from multiprocessing import Pool, Manager
 from torch import nn
 
@@ -166,8 +167,8 @@ class Orchestrator():
         local_warm_start = self.settings["local_warm_start"]
         nodes = self.settings["nodes"]
         sample_size = self.settings["sample_size"]
-        save_path = self.settings["save_path"]
-        
+        archive_manager = Archive_Manager(archive_manager = self.settings['archiver'],
+                                          logger = orchestrator_logger)
 
         # CREATING FEDERATED NODES
         nodes_green = create_nodes(nodes, self.node_settings) # Exterior method / function, can override in childr.
@@ -208,22 +209,9 @@ class Orchestrator():
                     # Upadting the orchestrator
                     self.central_model.update_weights(avg)
 
-                    # SAVING METRICS <- ONLY IF ENABLED IN SETTINGS
-                    if self.settings['save_metrics'] == True:
-                        Handler.save_model_metrics(iteration=iteration,
-                            model = self.central_model,
-                            logger = orchestrator_logger,
-                            saving_path= save_path,
-                            log_to_screen=True,
-                            file_name = self.metrics_filename) # PRESERVING METRICS FUNCTION -> CHANGE IF NEEDED
-                    
-                    # LOGGING METRICS <- ONLY IF ENABLED IN SETTINGS
-                    # Logging the metrics of sample or all nodes
-                    if self.settings['evaluation'] == "full":
-                        for node in nodes_green:
-                            Handler.log_model_metrics(iteration=iteration,
-                                model = node.model,
-                                logger = orchestrator_logger) # LOGGING METRICS FUNCTION -> CHANGE IF NEEDED
-        
+                    archive_manager.archive_training_results(iteration = iteration,
+                                                             central_model=self.central_model,
+                                                             nodes=nodes_green)
+
         orchestrator_logger.critical("Training complete")
                     

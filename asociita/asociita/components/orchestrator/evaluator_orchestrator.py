@@ -8,6 +8,7 @@ from asociita.utils.loggers import Loggers
 from asociita.utils.orchestrations import create_nodes, sample_nodes, train_nodes
 from asociita.utils.optimizers import Optimizers
 from asociita.components.evaluator.evaluation_manager import Evaluation_Manager
+from asociita.components.archiver.archive_manager import Archive_Manager
 # ADDITIONAL IMPORTS
 import datasets, copy
 from multiprocessing import Pool, Manager
@@ -59,7 +60,6 @@ class Evaluator_Orchestrator(Orchestrator):
         local_warm_start = self.settings["local_warm_start"] # Local warm start for pre-trained models - not implemented yet.
         nodes = self.settings["nodes"] # List of nodes, list[int]
         sample_size = self.settings["sample_size"] # Size of the sample, int.
-        save_path = self.settings["save_path"] # Save_path of all the relevant sim. details, str or path-like.
         # OPTIMIZER SETTINGS
         optimizer_settings = self.settings["optimizer"] # Dict containing instructions for the optimizer, dict.
         optimizer_name = optimizer_settings["name"] # Name of the optimizer, e.g. FedAdagard, dict.
@@ -69,6 +69,10 @@ class Evaluator_Orchestrator(Orchestrator):
         # SETTING-UP EVALUATION MANAGER
         evaluation_maanger = Evaluation_Manager(settings=self.settings,
                                                 model=self.central_model)
+        archive_manager = Archive_Manager(archive_manager = self.settings['archiver'],
+                                          logger = orchestrator_logger)
+        self.metrics_save_path = self.settings['metrics_save_path']
+
         # CREATING FEDERATED NODES
         nodes_green = create_nodes(nodes, self.node_settings)
         # CREATING LOCAL MODELS (that will be loaded onto nodes)
@@ -110,54 +114,15 @@ class Evaluator_Orchestrator(Orchestrator):
                                                          delta=grad_avg)
                     # TRACKING GRADIENTS FOR EVALUATION
                     evaluation_maanger.track_gradients(gradients=gradients) # TRACKING FUNCTION -> CHANGE IF NEEDED
-
+                    ### WEIGHTS UPDATE
                     # Updating the nodes
                     for node in nodes_green:
                         node.model.update_weights(updated_weights)
                     # Upadting the orchestrator
-                    self.central_model.update_weights(updated_weights)
-
-                    # SAVING TRAINING METRICS <- ONLY IF ENABLED IN SETTINGS
-                    if self.settings['training_evaluation'] == 'log_and_save':
-                        Handler.save_model_metrics(iteration=iteration,
-                            model = self.central_model,
-                            logger = orchestrator_logger,
-                            saving_path = save_path,
-                            log_to_screen = True,
-                            file_name=self.training_metrics_filename) # PRESERVING METRICS FUNCTION -> CHANGE IF NEEDED
-                    elif self.settings['training_evaluation'] == 'log':
-                        Handler.log_model_metrics(iteration=iteration,
-                                                logger = orchestrator_logger,
-                                                model = self.central_model)
-                    else:
-                        orchestrator_logger.warning("No training metrics being preserved. To enable metric preservation add 'log_and_save' or 'log' to settings.")
-                    
-
-                    # SAVING NODES METRICS <- ONLY IF ENABLED IN SETTINGS
-                    if self.settings['nodes_evaluation'] == 'log_and_save':
-                        for node in nodes_green:
-                            Handler.save_model_metrics(iteration=iteration,
-                                model = node.model,
-                                logger = orchestrator_logger,
-                                saving_path = save_path,
-                                log_to_screen = True,
-                                file_name=self.nodes_metrics_filename) # PRESERVING METRICS FUNCTION -> CHANGE IF NEEDED
-                    elif self.settings['nodes_evaluation'] == 'log':
-                        for nodes in nodes_green:
-                            Handler.log_model_metrics(iteration=iteration,
-                                                    logger = orchestrator_logger,
-                                                    model = node.model)
-                    else:
-                        orchestrator_logger.warning("No nodes metrics being preserved. To enable metric preservation add 'log_and_save' or 'log' to settings.")
-
-                    if self.settings['model_preservation'] == 'full':
-                        # Saving general model
-                        self.central_model.store_model_on_disk(iteration = iteration,
-                                                               path = self.settings['central_model_preservation_path'])
-                        for node in nodes_green:
-                            node.model.store_model_on_disk(iteration=iteration,
-                                                           path=self.settings['local_model_preservation_path'])
-                    
+                    self.central_model.update_weights(updated_weights)                 
+                    archive_manager.archive_training_results(iteration = iteration,
+                                                             central_model=self.central_model,
+                                                             nodes=nodes_green)
         # 4. FINALIZING PHASE
         # EVALUATING THE RESULTS
         evaluation_results, mapped_results = evaluation_maanger.calculate_results()
@@ -165,6 +130,6 @@ class Evaluator_Orchestrator(Orchestrator):
         # FINAL MESSAGES
         print(evaluation_results)
         print(mapped_results)
-        evaluation_maanger.save_results(path = save_path,
+        evaluation_maanger.save_results(path = self.metrics_save_path,
                                         mapped_results=mapped_results)
         orchestrator_logger.critical("Training complete")

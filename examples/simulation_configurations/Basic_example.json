@@ -1,19 +1,10 @@
 {
     "orchestrator": {
         "iterations": 3,
-        "number_of_nodes": 4,
+        "number_of_nodes": 10,
         "local_warm_start": false,
-        "sample_size": 4,
-        "optimizer": {
-            "name": "FedAdagard",
-            "learning_rate": 0.1,
-            "b1": 0.3,
-            "tau": 0.001},
+        "sample_size": 2,
         "metrics_save_path": "None",
-        "evaluation": {
-            "LOO_OR": true,
-            "Shapley_OR": true
-        },
         "archiver":{
             "orchestrator": true,
             "clients_on_central": true,
