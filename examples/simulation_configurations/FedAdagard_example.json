@@ -35,7 +35,6 @@
     "model_settings": {
         "optimizer": "RMS",
         "batch_size": 32,
-        "learning_rate": 0.001,
-        "features_name": "img"}
+        "learning_rate": 0.001}
         }
 }

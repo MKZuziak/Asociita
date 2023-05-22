@@ -1,5 +1,5 @@
 {
-    "dataset_name" : "mnist",
+    "dataset_name" : "cifar10",
     "split_type" : "random_imbalanced",
     "shards": 4,
     "local_test_size": 0.2,

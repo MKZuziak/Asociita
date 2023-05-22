@@ -67,7 +67,6 @@ class FederatedModel:
         self.net = net
         self.settings = settings
         self.node_name = node_name
-        self.features_name = settings["features_name"]
         # If both, train and test data were provided
         if len(local_dataset) == 2:
             self.trainloader, self.testloader = self.prepare_data(local_dataset)
@@ -269,7 +268,7 @@ class FederatedModel:
 
         self.net.train()
         for _, dic in enumerate(self.trainloader):
-            data = dic[self.features_name]
+            data = dic['image']
             target = dic['label']
 
             self.optimizer.zero_grad()
@@ -327,7 +326,7 @@ class FederatedModel:
                 losses = []
                 with torch.no_grad():
                     for _, dic in enumerate(self.testloader):
-                        data = dic[self.features_name]
+                        data = dic['image']
                         target = dic['label']
                         data, target = data.to(self.device), target.to(self.device)
                         output = self.net(data)
@@ -391,5 +390,5 @@ class FederatedModel:
     def transform_func(self,
                        data):
         convert_tensor = transforms.ToTensor()
-        data[self.features_name] = [convert_tensor(img) for img in data[self.features_name]]
+        data['image'] = [convert_tensor(img) for img in data['image']]
         return data

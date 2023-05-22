@@ -7,6 +7,8 @@ class Helpers:
         with open(path, 'r') as json_file:
             data = json.load(json_file)
         if convert_keys == True:
-            data['transformations'] = {int(key): value for key, value in data['transformations'].items()}
-            data['imbalanced_clients'] = {int(key): value for key, value in data['imbalanced_clients'].items()}
+            if data.get('transformations'):
+                data['transformations'] = {int(key): value for key, value in data['transformations'].items()}
+            if data.get('imbalanced_clients'):
+                data['imbalanced_clients'] = {int(key): value for key, value in data['imbalanced_clients'].items()}
         return data
