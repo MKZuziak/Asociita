@@ -16,13 +16,6 @@ from asociita.utils.loggers import Loggers
 
 model_logger = Loggers.model_logger()
 
-
-def transform_func(data):
-    convert_tensor = transforms.ToTensor()
-    data["image"] = [convert_tensor(img) for img in data["image"]]
-    return data
-
-
 class FederatedModel:
     """This class is used to encapsulate the (PyTorch) federated model that
     we will train. It accepts only the PyTorch models and 
@@ -46,6 +39,7 @@ class FederatedModel:
             net (nn.Module): Neural Network architecture that we want to use.
             local_dataset (list[...]): local dataset that will be used with this set.
             node_name (int): identifier for the node that uses this container.
+            features_name (int): name of key used to retrieve features, e.g. 'image'.
         -------------
         Returns:
             None
@@ -73,6 +67,7 @@ class FederatedModel:
         self.net = net
         self.settings = settings
         self.node_name = node_name
+        self.features_name = settings["features_name"]
         # If both, train and test data were provided
         if len(local_dataset) == 2:
             self.trainloader, self.testloader = self.prepare_data(local_dataset)
@@ -124,8 +119,8 @@ class FederatedModel:
             Tuple[torch.utils.data.DataLoader]: test set, if only_test == True.
         """
         if only_test == False:
-            local_dataset[0] = local_dataset[0].with_transform(transform_func)
-            local_dataset[1] = local_dataset[1].with_transform(transform_func)
+            local_dataset[0] = local_dataset[0].with_transform(self.transform_func)
+            local_dataset[1] = local_dataset[1].with_transform(self.transform_func)
             batch_size = self.settings["batch_size"]
             trainloader = torch.utils.data.DataLoader(
                 local_dataset[0],
@@ -143,7 +138,7 @@ class FederatedModel:
             #self.print_data_stats(trainloader) #TODO
             return trainloader, testloader
         else:
-            local_dataset[0] = local_dataset[0].with_transform(transform_func)
+            local_dataset[0] = local_dataset[0].with_transform(self.transform_func)
             testloader = torch.utils.data.DataLoader(
                 local_dataset[0],
                 batch_size=16,
@@ -274,7 +269,7 @@ class FederatedModel:
 
         self.net.train()
         for _, dic in enumerate(self.trainloader):
-            data = dic['image']
+            data = dic[self.features_name]
             target = dic['label']
 
             self.optimizer.zero_grad()
@@ -332,7 +327,7 @@ class FederatedModel:
                 losses = []
                 with torch.no_grad():
                     for _, dic in enumerate(self.testloader):
-                        data = dic['image']
+                        data = dic[self.features_name]
                         target = dic['label']
                         data, target = data.to(self.device), target.to(self.device)
                         output = self.net(data)
@@ -391,3 +386,10 @@ class FederatedModel:
                     true_positive_rate,
                     false_positive_rate
                 )
+
+
+    def transform_func(self,
+                       data):
+        convert_tensor = transforms.ToTensor()
+        data[self.features_name] = [convert_tensor(img) for img in data[self.features_name]]
+        return data

@@ -3,6 +3,7 @@ from asociita.components.orchestrator.fedopt_orchestrator import Fedopt_Orchestr
 from asociita.components.orchestrator.evaluator_orchestrator import Evaluator_Orchestrator
 from asociita.components.nodes.federated_node import FederatedNode
 from asociita.models.pytorch.mnist import MnistNet
+from asociita.models.pytorch.cifar10 import CifarNet
 from asociita.datasets.fetch_data import load_data
 from asociita.utils.helpers import Helpers
 import os
@@ -12,7 +13,7 @@ if __name__ == "__main__":
     # CONFIGURATION: Training configuration
     save_path = os.path.join(os.getcwd(), r'examples')
     settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'simulation_configurations', 'FedAdagard_example.json'))
-    data_settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'dataset_configurations', 'Random_Imbalanced_example.json'), convert_keys=True)
+    data_settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'dataset_configurations', 'Random_Uniform_example.json'))
     results_save_path = os.path.join(save_path, "results")
     settings["orchestrator"]["metrics_save_path"] = results_save_path
     settings["orchestrator"]["archiver"]["metrics_savepath"] = results_save_path
@@ -30,7 +31,7 @@ if __name__ == "__main__":
 
 
     # MODEL: Using utils to retrieve a model
-    model = MnistNet()
+    model = CifarNet()
     
     st = time.time()
     # SIMULATION: Creating an Orchestrator object

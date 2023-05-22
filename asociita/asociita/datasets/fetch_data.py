@@ -1,6 +1,7 @@
 import logging
 import datasets
 from asociita.datasets.load_mnist import load_mnist
+from asociita.datasets.load_cifar import load_cifar
 import pickle
 import os
 
@@ -32,6 +33,16 @@ def load_data(settings:dict) -> list[datasets.arrow_dataset.Dataset,
     dataset_name = settings['dataset_name']
     if dataset_name == 'mnist':
         loaded_dataset = load_mnist(settings=settings)
+        if settings['save_dataset'] == True:
+            dataset_name = f"MNIST_{settings['shards']}_dataset"
+            path = os.path.join(settings['save_path'], dataset_name)
+            with open(path, 'wb') as file:
+                pickle.dump(loaded_dataset, file)
+            return loaded_dataset
+        else:
+            return loaded_dataset
+    elif dataset_name == 'cifar10':
+        loaded_dataset = load_cifar(settings=settings)
         if settings['save_dataset'] == True:
             dataset_name = f"MNIST_{settings['shards']}_dataset"
             path = os.path.join(settings['save_path'], dataset_name)

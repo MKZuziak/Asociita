@@ -1,7 +1,7 @@
 {
     "orchestrator": {
-        "iterations": 3,
-        "number_of_nodes": 10,
+        "iterations": 10,
+        "number_of_nodes": 3,
         "local_warm_start": false,
         "sample_size": 2,
         "optimizer": {
@@ -31,10 +31,11 @@
         3]
     },
     "nodes":{
-    "local_epochs": 2,
+    "local_epochs": 4,
     "model_settings": {
         "optimizer": "RMS",
         "batch_size": 32,
-        "learning_rate": 0.001}
+        "learning_rate": 0.001,
+        "features_name": "img"}
         }
 }
