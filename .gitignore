@@ -188,3 +188,16 @@ examples/results/node_orchestrator_iteration_0.pt
 examples/results/node_orchestrator_iteration_1.pt
 examples/results/node_orchestrator_iteration_2.pt
 examples/results/training_results.csv
+examples/dataset_configurations/Random_Uniform_example.json
+examples/datasets/MNIST_3_dataset
+examples/results/node_orchestrator_iteration_3.pt
+examples/results/node_orchestrator_iteration_4.pt
+examples/results/node_orchestrator_iteration_5.pt
+examples/results/node_orchestrator_iteration_6.pt
+examples/results/node_orchestrator_iteration_7.pt
+examples/results/node_orchestrator_iteration_8.pt
+examples/results/node_orchestrator_iteration_9.pt
+examples/simulation_configurations/Basic_example.json
+examples/simulation_configurations/Basic_Fedopt_example.json
+examples/simulation_configurations/Contribution_example.json
+examples/simulation_configurations/FedAdagard_example.json
