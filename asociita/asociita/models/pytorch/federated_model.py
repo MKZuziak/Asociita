@@ -58,9 +58,9 @@ class FederatedModel:
         self.node_name = node_name
 
         #device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        device = torch.device("cpu")
-        self.net.to(device)
-        model_logger.info(f"Node {node_name} will use {device} as a device.")
+        # device = torch.device("cpu")
+        # self.net.to(device)
+        # model_logger.info(f"Node {node_name} will use {device} as a device.")
 
         # If both, train and test data were provided
         if len(local_dataset) == 2:
