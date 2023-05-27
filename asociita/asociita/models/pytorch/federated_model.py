@@ -76,6 +76,8 @@ class FederatedModel:
         else:
             raise "The provided dataset object seem to be wrong. Please provide list[train_set, test_set] or list[test_set]"
 
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        model_logger.info()
 
         # List containing all the parameters to update
         params_to_update = []
