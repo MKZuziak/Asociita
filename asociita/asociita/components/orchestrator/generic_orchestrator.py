@@ -12,6 +12,8 @@ from torch import nn
 
 
 orchestrator_logger = Loggers.orchestrator_logger()
+from multiprocessing import set_start_method
+set_start_method("spawn", force=True)
 
 class Orchestrator():
     def __init__(self, 
