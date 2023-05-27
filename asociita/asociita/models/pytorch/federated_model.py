@@ -48,17 +48,6 @@ class FederatedModel:
         self.initial_model = None
         self.optimizer: optim.Optimizer = None
         
-        #TODO: Add support for training on different GPUs.
-        #gpus = preferences.gpu_config
-        #expected_len = 11
-        #if len(node_name) == expected_len:
-            #if gpus:
-                #gpu_name = gpus[int(node_name[10]) % len(gpus)]
-            #self.device = torch.device(
-                #gpu_name if torch.cuda.is_available() and gpus else "cpu",
-            #)
-            #logger.debug(f"Running on {self.device}")
-        
         # Checks for all the necessary elements:
         assert settings, "Could not find settings, please ensure that a valid dictionary containing settings was passed in a function call."
         assert net, "Could not find net object, please ensure that a valid nn.Module was passed in a function call."
@@ -67,17 +56,22 @@ class FederatedModel:
         self.net = net
         self.settings = settings
         self.node_name = node_name
+
+        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.net.to(device)
+        model_logger.info(f"Node {node_name} will use {device} as a device.")
+
         # If both, train and test data were provided
         if len(local_dataset) == 2:
             self.trainloader, self.testloader = self.prepare_data(local_dataset)
+            #self.trainloader.to(device)
+            #self.testloader.to(device)
         # If only a test dataset was provided.
         elif len(local_dataset) == 1:
             self.testloader = self.prepare_data(local_dataset, only_test=True)
+            #self.testloader.to(device)
         else:
             raise "The provided dataset object seem to be wrong. Please provide list[train_set, test_set] or list[test_set]"
-
-        device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        model_logger.info()
 
         # List containing all the parameters to update
         params_to_update = []
