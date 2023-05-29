@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
 
     # MODEL: Using utils to retrieve a model
-    model = CifarNet()
+    model = MnistNet
     
     st = time.time()
     # SIMULATION: Creating an Orchestrator object
