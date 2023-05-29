@@ -14,7 +14,7 @@ if __name__ == "__main__":
     # CONFIGURATION: Training configuration
     save_path = os.path.join(os.getcwd(), 'examples')
     settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples',  'simulation_configurations', 'FedAdagard_example.json'))
-    data_settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'dataset_configurations', 'Random_Uniform_example.json'), convert_keys=True)
+    data_settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'dataset_configurations', 'Random_Uniform_Transform_example.json'), convert_keys=True)
     results_save_path = os.path.join(save_path, "results")
     settings["orchestrator"]["metrics_save_path"] = results_save_path
     settings["orchestrator"]["archiver"]["metrics_savepath"] = results_save_path
@@ -32,7 +32,7 @@ if __name__ == "__main__":
 
 
     # MODEL: Using utils to retrieve a model
-    model = CifarNet()
+    model = MnistNet()
     
     st = time.time()
     # SIMULATION: Creating an Orchestrator object

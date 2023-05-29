@@ -6,7 +6,7 @@ from datasets import arrow_dataset
 
 def blur_img(shard: arrow_dataset.Dataset,
              kernel_size: tuple[int, int]=(1, 3),
-             sigma: tuple[float, float]=(1., 10.)) -> arrow_dataset.Dataset:
+             sigma: tuple[float, float]=(3., 40.)) -> arrow_dataset.Dataset:
     """Blurs the given dataset.
         -------------
         Args
@@ -39,7 +39,7 @@ def rotate_img(shard: arrow_dataset.Dataset,
 
 
 def noise_img(shard: arrow_dataset.Dataset,
-              noise_multiplyer: float = 0.005) -> arrow_dataset.Dataset:
+              noise_multiplyer: float = 0.009) -> arrow_dataset.Dataset:
     """Add gausian noise to the dataset.
     -------------
     Args
