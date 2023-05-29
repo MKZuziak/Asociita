@@ -53,24 +53,20 @@ class FederatedModel:
         assert net, "Could not find net object, please ensure that a valid nn.Module was passed in a function call."
         assert local_dataset, "Could not find local dataset that should be used with that model. Pleasure ensure that local dataset was passed in a function call."
         
-        self.net = net
+        self.net = copy.deepcopy(net)
         self.settings = settings
         self.node_name = node_name
 
-        #device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        # device = torch.device("cpu")
-        # self.net.to(device)
-        # model_logger.info(f"Node {node_name} will use {device} as a device.")
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.net.to(self.device)
+        model_logger.info(f"Node {node_name} will use {self.device} as a device.")
 
         # If both, train and test data were provided
         if len(local_dataset) == 2:
             self.trainloader, self.testloader = self.prepare_data(local_dataset)
-            #self.trainloader.to(device)
-            #self.testloader.to(device)
         # If only a test dataset was provided.
         elif len(local_dataset) == 1:
             self.testloader = self.prepare_data(local_dataset, only_test=True)
-            #self.testloader.to(device)
         else:
             raise "The provided dataset object seem to be wrong. Please provide list[train_set, test_set] or list[test_set]"
 
@@ -183,7 +179,7 @@ class FederatedModel:
         -------------
             _type_: weights of the network
         """
-        return self.net.state_dict()
+        return copy.deepcopy(self.net.state_dict())
     
 
     def get_gradients(self):
@@ -196,7 +192,7 @@ class FederatedModel:
         for key in weights_t1:
             self.gradients[key] = weights_t2[key] - weights_t1[key]
         
-        return self.gradients
+        return copy.deepcopy(self.gradients)
 
 
     def update_weights(self, avg_tensors) -> None:
@@ -272,8 +268,8 @@ class FederatedModel:
 
             if isinstance(data, list):
                 data = data[0]
-
-            #data, target = data.to(self.device), target.to(self.device)
+            
+            data, target = data.to(self.device), target.to(self.device)
             # forward pass, backward pass and optimization
             outputs = self.net(data)
             _, predicted = torch.max(outputs.data, 1)

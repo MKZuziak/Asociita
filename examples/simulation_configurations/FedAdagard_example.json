@@ -1,11 +1,11 @@
 {
     "orchestrator": {
-        "iterations": 10,
-        "number_of_nodes": 3,
+        "iterations": 30,
+        "number_of_nodes": 5,
         "local_warm_start": false,
-        "sample_size": 2,
+        "sample_size": 5,
         "optimizer": {
-            "name": "FedAdagard",
+            "name": "Simple",
             "learning_rate": 0.1,
             "b1": 0.3,
             "tau": 0.001},
@@ -28,13 +28,14 @@
         0,
         1,
         2,
-        3]
+        3,
+        4]
     },
     "nodes":{
-    "local_epochs": 4,
+    "local_epochs": 5,
     "model_settings": {
         "optimizer": "RMS",
-        "batch_size": 32,
+        "batch_size": 256,
         "learning_rate": 0.001}
         }
 }

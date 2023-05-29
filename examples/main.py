@@ -8,11 +8,12 @@ from asociita.datasets.fetch_data import load_data
 from asociita.utils.helpers import Helpers
 import os
 import time
+import timm
 
 if __name__ == "__main__":
     # CONFIGURATION: Training configuration
-    save_path = os.path.join(os.getcwd(), r'examples')
-    settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'simulation_configurations', 'FedAdagard_example.json'))
+    save_path = os.path.join(os.getcwd(), 'examples')
+    settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples',  'simulation_configurations', 'FedAdagard_example.json'))
     data_settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'dataset_configurations', 'Random_Uniform_example.json'), convert_keys=True)
     results_save_path = os.path.join(save_path, "results")
     settings["orchestrator"]["metrics_save_path"] = results_save_path
@@ -35,7 +36,7 @@ if __name__ == "__main__":
     
     st = time.time()
     # SIMULATION: Creating an Orchestrator object
-    orchestrator = Orchestrator(settings=settings)
+    orchestrator = Fedopt_Orchestrator(settings=settings)
     # SIMULATION: Loading the model onto the orchestrator
     orchestrator.prepare_orchestrator(model=model, validation_data=orchestrator_data)
 

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "asociita"
-version = "0.1.6.5"
+version = "0.1.6.6"
 description = "An intuitive and modular simulator for assessing the marginal value of a client's contribution in a decentralized setting."
 authors = ["Maciej Zuziak <maciejkrzysztof.zuziak@isti.cnr.it>"]
 license = "MIT"
@@ -11,12 +11,14 @@ repository = "https://github.com/Scolpe/Asociita"
 
 [tool.poetry.dependencies]
 python = "^3.10"
-torch = "^1.13.1"
+torch = "2.0.0"
 numpy = "^1.24.1"
-torchvision = "^0.14.1"
+torchvision = "0.15.1"
+torchaudio = "2.0.1"
 datasets = "^1.0.1"
 scikit-learn = "^1.2.0"
 matplotlib = "^3.7.1"
+timm = "^0.9"
 
 [build-system]
 requires = ["poetry-core"]

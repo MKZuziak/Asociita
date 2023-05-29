@@ -122,29 +122,41 @@ class Orchestrator():
         Returns:
             list[FederatedNode]"""
         
-        # create the manager
-        with Manager() as manager:
-            # create the shared queue
-            queue = manager.Queue()
-            # create a pool of workers
-            with Pool(nodes_number) as pool:
-                # asynchronously apply the function
-                results = [
-                    pool.apply_async(prepare_nodes, (node, model, dataset, queue))
-                    for node, model, dataset in zip(nodes_list, model_list, data_list)
-                ]
-                # consume the results
-                # Define a list of healthy nodes
-                nodes_green = []
-                for result in results:
-                    # query for results
-                    _ = result.get()
-                    updated_node = queue.get()
-                    # Adds to list only if the node is healthy
-                    if check_health(updated_node,
-                                    orchestrator_logger=orchestrator_logger):
-                        nodes_green.append(updated_node)
+        results = []
+        for node, model, dataset in zip(nodes_list, model_list, data_list):
+            node.prepare_node(model, dataset)
+            results.append(node)
+        nodes_green = []
+        for result in results:
+            if check_health(result,
+                            orchestrator_logger=orchestrator_logger):
+                nodes_green.append(result)
         return nodes_green # Returning initialized nodes
+
+        
+        # # create the manager
+        # with Manager() as manager:
+        #     # create the shared queue
+        #     queue = manager.Queue()
+        #     # create a pool of workers
+        #     with Pool(nodes_number) as pool:
+        #         # asynchronously apply the function
+        #         results = [
+        #             pool.apply_async(prepare_nodes, (node, model, dataset, queue))
+        #             for node, model, dataset in zip(nodes_list, model_list, data_list)
+        #         ]
+        #         # consume the results
+        #         # Define a list of healthy nodes
+        #         nodes_green = []
+        #         for result in results:
+        #             # query for results
+        #             _ = result.get()
+        #             updated_node = queue.get()
+        #             # Adds to list only if the node is healthy
+        #             if check_health(updated_node,
+        #                             orchestrator_logger=orchestrator_logger):
+        #                 nodes_green.append(updated_node)
+        # return nodes_green # Returning initialized nodes
 
     def train_protocol(self,
                 nodes_data: list[datasets.arrow_dataset.Dataset, 
