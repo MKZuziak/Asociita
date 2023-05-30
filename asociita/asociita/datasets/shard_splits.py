@@ -14,7 +14,7 @@ class Shard_Splits:
     def random_uniform(dataset: datasets.arrow_dataset.Dataset,
                        settings: dict):
         nodes_data = []
-        for shard in range(settings['shards']): # Each shard corresponds to one
+        for shard in range(settings['shards']): # Each shard corresponds to one agent.
             agent_data = dataset.shard(num_shards=settings['shards'], index=shard)
             
             # Shard transformation
@@ -23,7 +23,7 @@ class Shard_Splits:
                     original_imgs = copy.deepcopy(agent_data['image'])
                 agent_data = Shard_Transformation.transform(agent_data, preferences=settings['transformations'][shard]) # CALL SHARD_TRANSFORMATION CLASS
                 if settings['save_transformations']:
-                    save_random(original_imgs, agent_data['image'], settings['transformations'][shard])
+                    save_random(original_imgs, agent_data['image'], settings['transformations'][shard]["transformation_type"])
 
             # In-shard split between test and train data.
             agent_data = agent_data.train_test_split(test_size=settings["local_test_size"])

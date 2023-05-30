@@ -80,47 +80,73 @@ class Shard_Transformation:
     '''A common class for a set of transformation static methods 
     that can be applied to a shard.'''
     @staticmethod
-    def transform(shard: arrow_dataset.Dataset, preferences: str) -> arrow_dataset.Dataset:
+    def transform(shard: arrow_dataset.Dataset, preferences: dict) -> arrow_dataset.Dataset:
         """Performes transformation of the provided shard according to the preferences.
         -------------
         Args
             shard (arrow_dataset.Dataset): shard to be transformed.
-            preferences (str): type of transformation that should be applied.
+            preferences (dict): dict containing all the informations regarding the transformation.
        -------------
         Returns
             arrow_dataset.Dataset"""
-        if preferences == 'noise':
-            return Shard_Transformation.noise(shard)            
-        elif preferences == 'blur':
-            return Shard_Transformation.blur(shard)
-        elif preferences == 'rotation':
-            return Shard_Transformation.rotate(shard)
-        elif preferences == 'perspective_change':
-            return Shard_Transformation.change_perspective(shard)
+        transformation_name = preferences["transformation_type"]
+        
+        if transformation_name == 'noise':
+            return Shard_Transformation.noise(shard, preferences)            
+        elif transformation_name == 'blur':
+            return Shard_Transformation.blur(shard, preferences)
+        elif transformation_name == 'rotation':
+            return Shard_Transformation.rotate(shard, preferences)
+        elif transformation_name == 'perspective_change':
+            return Shard_Transformation.change_perspective(shard, preferences)
         else:
             print("Invalid key-word argument")
             return shard
     
 
     @staticmethod
-    def noise(shard: arrow_dataset.Dataset) -> arrow_dataset.Dataset:
-        shard = shard.map(noise_img, batched=True)
+    def noise(shard: arrow_dataset.Dataset, preferences: dict) -> arrow_dataset.Dataset:
+        if preferences.get('noise_multiplyer'):
+            noise_mult = preferences['noise_multiplyer']
+        else:
+            noise_mult = 0.005
+        shard = shard.map(noise_img, batched=True, fn_kwargs={'noise_multiplyer': noise_mult})
         return shard
     
 
     @staticmethod
-    def blur(shard: arrow_dataset.Dataset) -> arrow_dataset.Dataset:
-        shard = shard.map(blur_img, batched = True)
+    def blur(shard: arrow_dataset.Dataset, preferences: dict) -> arrow_dataset.Dataset:
+        if preferences.get('kernel_size'):
+            kernel_size = tuple(preferences['kernel_size'])
+        else:
+            kernel_size = (1, 3)
+        if preferences.get('sigma'):
+            sigma = tuple(preferences['sigma'])
+        else:
+            sigma = (3, 40)
+        shard = shard.map(blur_img, batched = True, fn_kwargs = {'kernel_size': kernel_size, 'sigma': sigma})
         return shard
     
 
     @staticmethod
-    def rotate(shard: arrow_dataset.Dataset) -> arrow_dataset.Dataset:
-        shard = shard.map(rotate_img, batched = True)
+    def rotate(shard: arrow_dataset.Dataset, preferences: dict) -> arrow_dataset.Dataset:
+        if preferences.get('rotation'):
+            degrees = tuple(preferences['rotation'])
+        else:
+            degrees = (0, 45)
+        shard = shard.map(rotate_img, batched = True, fn_kwargs = {'degrees': degrees})
         return shard
     
 
     @staticmethod
-    def change_perspective(shard: arrow_dataset.Dataset) -> arrow_dataset.Dataset:
-        shard = shard.map(perspective_img, batched = True)
+    def change_perspective(shard: arrow_dataset.Dataset, preferences: dict) -> arrow_dataset.Dataset:
+        if preferences.get('distortion_scale'):
+            distortion_scale = preferences['distortion_scale']
+        else:
+            distortion_scale = 0.5
+        if preferences.get('transformation_probability'):
+            transformation_probability = preferences['transformation_probability']
+        else:
+            transformation_probability = 0.5
+        shard = shard.map(perspective_img, batched = True, fn_kwargs = {'distortion_scale': distortion_scale, 'transformation_probability': transformation_probability})
         return shard
