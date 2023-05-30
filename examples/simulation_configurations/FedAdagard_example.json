@@ -34,7 +34,7 @@
     "local_epochs": 1,
     "model_settings": {
         "optimizer": "RMS",
-        "batch_size": 36,
+        "batch_size": 32,
         "learning_rate": 0.001}
         }
 }

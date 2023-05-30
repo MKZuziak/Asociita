@@ -201,3 +201,5 @@ examples/simulation_configurations/Basic_example.json
 examples/simulation_configurations/Basic_Fedopt_example.json
 examples/simulation_configurations/Contribution_example.json
 examples/simulation_configurations/FedAdagard_example.json
+examples/datasets/FMNIST_5_dataset
+examples/datasets/FMNIST_4_dataset
