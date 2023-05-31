@@ -190,7 +190,7 @@ class FederatedModel:
         
         self.gradients = OrderedDict.fromkeys(weights_t1.keys(), 0)
         for key in weights_t1:
-            self.gradients[key] = weights_t2[key] - weights_t1[key]
+            self.gradients[key] =  weights_t1[key] - weights_t2[key]
         
         return copy.deepcopy(self.gradients)
 

@@ -6,7 +6,7 @@
         "sample_size": 4,
         "optimizer": {
             "name": "FedAdagard",
-            "learning_rate": 0.1,
+            "learning_rate": 0.7,
             "b1": 0.3,
             "tau": 0.001},
         "metrics_save_path": "None",

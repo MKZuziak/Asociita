@@ -107,7 +107,7 @@ class FederatedNode:
                 self.model.get_gradients()
             )
         else:
-            node_logger.warning("No mode was provided, returning only node's weights")
+            node_logger.warning("No mode was provided, returning only model's weights")
             return (
                 self.node_id,
                 self.model.get_weights()

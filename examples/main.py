@@ -14,11 +14,11 @@ if __name__ == "__main__":
     # CONFIGURATION: Training configuration
     save_path = os.path.join(os.getcwd(), 'examples')
     settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples',  'simulation_configurations', 'FedAdagard_example.json'))
-    data_settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'dataset_configurations', 'Random_Imbalanced_example.json'), convert_keys=True)
+    data_settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'dataset_configurations', 'Random_Uniform_example.json'), convert_keys=True)
     results_save_path = os.path.join(save_path, "results")
     settings["orchestrator"]["metrics_save_path"] = results_save_path
     settings["orchestrator"]["archiver"]["metrics_savepath"] = results_save_path
-    settings["orchestrator"]["archiver"]["orchestrator_filename"] = "training_results.csv"
+    settings["orchestrator"]["archiver"]["orchestrator_filename"] = "FMNIST_FEDOPT_YOGI.csv"
     settings["orchestrator"]["archiver"]["central_on_local_filename"] = "central_on_local.csv"
     settings["orchestrator"]["archiver"]["orchestrator_model_save_path"] = results_save_path
     settings["orchestrator"]["archiver"]["nodes_model_save_path"] = results_save_path
@@ -32,6 +32,7 @@ if __name__ == "__main__":
 
 
     # MODEL: Using utils to retrieve a model
+    #model = timm.create_model('resnetv2_50', pretrained=True, num_classes=10, in_chans=1)
     model = MnistNet()
     
     st = time.time()
