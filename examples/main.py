@@ -2,6 +2,7 @@ from asociita.components.orchestrator.generic_orchestrator import Orchestrator
 from asociita.components.orchestrator.fedopt_orchestrator import Fedopt_Orchestrator
 from asociita.components.orchestrator.evaluator_orchestrator import Evaluator_Orchestrator
 from asociita.components.nodes.federated_node import FederatedNode
+from asociita.models.pytorch.fmnist import create_FashionMnistNet
 from asociita.models.pytorch.mnist import MnistNet
 from asociita.models.pytorch.cifar10 import CifarNet
 from asociita.datasets.fetch_data import load_data
@@ -33,11 +34,11 @@ if __name__ == "__main__":
 
     # MODEL: Using utils to retrieve a model
     #model = timm.create_model('resnetv2_50', pretrained=True, num_classes=10, in_chans=1)
-    model = MnistNet()
+    model = create_FashionMnistNet(pretrained=True)
     
     st = time.time()
     # SIMULATION: Creating an Orchestrator object
-    orchestrator = Fedopt_Orchestrator(settings=settings)
+    orchestrator = Orchestrator(settings=settings)
     # SIMULATION: Loading the model onto the orchestrator
     orchestrator.prepare_orchestrator(model=model, validation_data=orchestrator_data)
 
