@@ -207,3 +207,4 @@ examples/results/FMNIST_SIMPLE.csv
 examples/results/FMNIST_FEDOPT_YOGI.csv
 examples/datasets/MNIST_10_dataset
 examples/datasets/FMNIST_10_dataset
+examples/datasets/MNIST_8_dataset

@@ -67,8 +67,11 @@ class Evaluator_Orchestrator(Orchestrator):
 
         # 2. SET-UP PHASE -> CHANGE IF NEEDED
         # SETTING-UP EVALUATION MANAGER
-        evaluation_maanger = Evaluation_Manager(settings=self.settings,
-                                                model=self.central_model)
+        evaluation_manager = Evaluation_Manager(settings = self.settings,
+                                                model = self.central_model,
+                                                nodes = nodes,
+                                                iterations = iterations)
+        
         archive_manager = Archive_Manager(archive_manager = self.settings['archiver'],
                                           logger = orchestrator_logger)
         self.metrics_save_path = self.settings['metrics_save_path']
@@ -84,8 +87,8 @@ class Evaluator_Orchestrator(Orchestrator):
                                                 data_list=nodes_data,
                                                 nodes_number=nodes_number)
         # SETTING UP THE OPTIMIZER
-        Optim = Optimizers(weights = self.central_model.get_weights())
-
+        Optim = Optimizers(weights = self.central_model.get_weights(),
+                           settings=optimizer_settings)
 
         # 3. TRAINING PHASE ----- FEDOPT
         with Manager() as manager:
@@ -96,10 +99,14 @@ class Evaluator_Orchestrator(Orchestrator):
                 for iteration in range(iterations):
                     orchestrator_logger.info(f"Iteration {iteration}")
                     gradients = {}
+                    evaluation_manager.preserve_previous_model(previous_model = self.central_model) # Preserving last central model
+                    evaluation_manager.preserve_previous_optimizer(previous_optimizer = Optim) # Preserving last optimizer settings (together with momentum)
+                    
                     # Sampling nodes and asynchronously apply the function
-                    sampled_nodes = sample_nodes(nodes_green, 
+                    sampled_nodes, sampled_idx = sample_nodes(nodes_green, 
                                                  sample_size=sample_size,
-                                                 orchestrator_logger=orchestrator_logger) # SAMPLING FUNCTION -> CHANGE IF NEEDED
+                                                 orchestrator_logger=orchestrator_logger,
+                                                 return_aux=True) # SAMPLING FUNCTION -> CHANGE IF NEEDED
                     results = [pool.apply_async(train_nodes, (node, 'gradients')) for node in sampled_nodes]
                     # consume the results
                     for result in results:
@@ -108,28 +115,30 @@ class Evaluator_Orchestrator(Orchestrator):
                     
                     # Computing the average of gradients
                     grad_avg = Aggregators.compute_average(gradients) # AGGREGATING FUNCTION -> CHANGE IF NEEDED
-                    updated_weights = Optim.fed_optimize(optimizer=optimizer_name,
-                                                         settings=optimizer_settings,
-                                                         weights=self.central_model.get_weights(),
+                    updated_weights = Optim.fed_optimize(weights=self.central_model.get_weights(),
                                                          delta=grad_avg)
+                    self.central_model.update_weights(updated_weights) # Updating the central model
+                    evaluation_manager.preserve_updated_model(updated_model = self.central_model)
+
                     # TRACKING GRADIENTS FOR EVALUATION
-                    evaluation_maanger.track_gradients(gradients=gradients) # TRACKING FUNCTION -> CHANGE IF NEEDED
+                    evaluation_manager.track_results(gradients = gradients,
+                                                     nodes_in_sample = sampled_nodes,
+                                                     iteration = iteration,
+                                                     optimizer = Optim) # TRACKING FUNCTION -> CHANGE IF NEEDED
+                    
                     ### WEIGHTS UPDATE
                     # Updating the nodes
                     for node in nodes_green:
                         node.model.update_weights(updated_weights)
-                    # Upadting the orchestrator
-                    self.central_model.update_weights(updated_weights)                 
+                    # Upadting the orchestrator                 
                     archive_manager.archive_training_results(iteration = iteration,
                                                              central_model=self.central_model,
                                                              nodes=nodes_green)
         # 4. FINALIZING PHASE
         # EVALUATING THE RESULTS
-        evaluation_results, mapped_results = evaluation_maanger.calculate_results()
         
-        # FINAL MESSAGES
-        print(evaluation_results)
-        print(mapped_results)
-        evaluation_maanger.save_results(path = self.metrics_save_path,
-                                        mapped_results=mapped_results)
+        
+        psi = evaluation_manager.finalize_tracking()
+        print(psi)
+        
         orchestrator_logger.critical("Training complete")

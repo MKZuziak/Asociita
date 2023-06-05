@@ -69,22 +69,32 @@ def check_health(node: FederatedNode,
 
 def sample_nodes(nodes: list[FederatedNode], 
                  sample_size: int,
-                 orchestrator_logger: Logger) -> list[FederatedNode]:
+                 orchestrator_logger: Logger,
+                 return_aux: bool = False) -> list[FederatedNode]:
     """Sample the nodes given the provided sample size. If sample_size is bigger
     or equal to the number of av. nodes, the sampler will return the original list.
      -------------
     Args:
         nodes (list[FederatedNode]): original list of nodes to be sampled from
         sample_size (int): size of the sample.
+        return_aux (bool = auxiliary): if set to True, will return a list containing id's of the sampled nodes.
     -------------
     Returns:
         list[FederatedNode]: List of sampled nodes."""
     if len(nodes) <= sample_size:
         orchestrator_logger.warning("Sample size should be smaller than the size of the population, returning the original list")
-        return nodes
+        if return_aux == True:
+            sampled_ids = [node.node_id for node in nodes]
+            return (nodes, sampled_ids)
+        else:
+            return nodes
     else:
         sample = random.sample(nodes, sample_size)
-        return sample
+        if return_aux == True:
+            sampled_ids = [node.node_id for node in sample]
+            return (sample, sampled_ids)
+        else:
+            return sample
 
 
 def train_nodes(node: FederatedNode, 
