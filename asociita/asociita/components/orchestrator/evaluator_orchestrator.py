@@ -62,7 +62,6 @@ class Evaluator_Orchestrator(Orchestrator):
         sample_size = self.settings["sample_size"] # Size of the sample, int.
         # OPTIMIZER SETTINGS
         optimizer_settings = self.settings["optimizer"] # Dict containing instructions for the optimizer, dict.
-        optimizer_name = optimizer_settings["name"] # Name of the optimizer, e.g. FedAdagard, dict.
         
 
         # 2. SET-UP PHASE -> CHANGE IF NEEDED
@@ -71,11 +70,8 @@ class Evaluator_Orchestrator(Orchestrator):
                                                 model = self.central_model,
                                                 nodes = nodes,
                                                 iterations = iterations)
-        
         archive_manager = Archive_Manager(archive_manager = self.settings['archiver'],
                                           logger = orchestrator_logger)
-        self.metrics_save_path = self.settings['metrics_save_path']
-
         # CREATING FEDERATED NODES
         nodes_green = create_nodes(nodes, self.node_settings)
         # CREATING LOCAL MODELS (that will be loaded onto nodes)
@@ -90,10 +86,9 @@ class Evaluator_Orchestrator(Orchestrator):
         Optim = Optimizers(weights = self.central_model.get_weights(),
                            settings=optimizer_settings)
 
+
         # 3. TRAINING PHASE ----- FEDOPT
         with Manager() as manager:
-            # create the shared queue
-            queue = manager.Queue()
             # create the pool of workers
             with Pool(sample_size) as pool:
                 for iteration in range(iterations):
@@ -101,7 +96,6 @@ class Evaluator_Orchestrator(Orchestrator):
                     gradients = {}
                     evaluation_manager.preserve_previous_model(previous_model = self.central_model) # Preserving last central model
                     evaluation_manager.preserve_previous_optimizer(previous_optimizer = Optim) # Preserving last optimizer settings (together with momentum)
-                    
                     # Sampling nodes and asynchronously apply the function
                     sampled_nodes, sampled_idx = sample_nodes(nodes_green, 
                                                  sample_size=sample_size,
@@ -136,9 +130,6 @@ class Evaluator_Orchestrator(Orchestrator):
                                                              nodes=nodes_green)
         # 4. FINALIZING PHASE
         # EVALUATING THE RESULTS
-        
-        
         psi = evaluation_manager.finalize_tracking()
         print(psi)
-        
         orchestrator_logger.critical("Training complete")

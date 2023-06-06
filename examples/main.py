@@ -33,24 +33,12 @@ if __name__ == "__main__":
 
 
     # MODEL: Using utils to retrieve a model
-    #model = timm.create_model('resnetv2_50', pretrained=True, num_classes=10, in_chans=1)
     model = MnistNet()
-    
-    st = time.time()
     # SIMULATION: Creating an Orchestrator object
-    orchestrator = Evaluator_Orchestrator(settings=settings)
+    orchestrator = Fedopt_Orchestrator(settings=settings)
     # SIMULATION: Loading the model onto the orchestrator
     orchestrator.prepare_orchestrator(model=model, validation_data=orchestrator_data)
-
 
     # TRAINING PHASE: running the training protocol.
     #orchestrator.fed_avg(nodes_data=nodes_data)
     orchestrator.train_protocol(nodes_data=nodes_data)
-    et = time.time()
-    elapsed_time = et - st
-    print(f"Execution time: {elapsed_time}, seconds")
-
-    # Checking the model
-    #model = orchestrator.central_model
-    #print(model)
-    
