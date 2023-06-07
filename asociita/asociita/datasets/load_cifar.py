@@ -41,12 +41,12 @@ def load_cifar(settings: dict) -> list[datasets.arrow_dataset.Dataset,
     dataset = dataset.rename_column('img', 'image')
 
     # Type: Random Uniform (Sharding) -> Same size, random distribution
-    if settings['split_type'] == 'random_uniform':
-        return [orchestrator_data, Shard_Splits.random_uniform(dataset=dataset, settings=settings)]
+    if settings['split_type'] == 'homogeneous':
+        return [orchestrator_data, Shard_Splits.homogeneous(dataset=dataset, settings=settings)]
     
     # Type: Uniform with Imbalanced Classes -> Samze size, different (random) distributions with heavy imbalance on selected clients
-    if settings['split_type'] == 'random_imbalanced':
-        return [orchestrator_data, Shard_Splits.random_imbalanced(dataset=dataset, settings=settings)]
+    if settings['split_type'] == 'heterogeneous_size':
+        return [orchestrator_data, Shard_Splits.heterogeneous_size(dataset=dataset, settings=settings)]
 
     # Type: Same Dataset -> One dataset copied n times.
     elif settings['split_type'] == 'replicate_same_dataset':

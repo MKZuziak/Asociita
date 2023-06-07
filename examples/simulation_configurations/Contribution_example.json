@@ -1,9 +1,9 @@
 {
     "orchestrator": {
-        "iterations": 4,
-        "number_of_nodes": 8,
+        "iterations": 8,
+        "number_of_nodes": 20,
         "local_warm_start": false,
-        "sample_size": 4,
+        "sample_size": 5,
         "optimizer": {
             "name": "FedAdagard",
             "learning_rate": 0.03162277660168379,
@@ -37,7 +37,19 @@
         4,
         5,
         6,
-        7]
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        16,
+        17,
+        18,
+        19]
     },
     "nodes":{
     "local_epochs": 4,

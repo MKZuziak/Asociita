@@ -4,15 +4,24 @@ from asociita.datasets.shard_transformation import Shard_Transformation
 from asociita.utils.handlers import Handler
 from asociita.utils.showcase import save_random
 import copy
+import numpy as np
 
-
+def rescale_vector_tosum(vector, desired_sum):
+    norm_const = desired_sum / vector.sum()
+    vector = vector * norm_const
+    vector = vector.astype(int)
+    l = desired_sum - vector.sum()
+    np.argpartition(vector, l)
+    for _ in range(l):
+        vector[np.argmin(vector)] += 1
+    return vector
 
 class Shard_Splits:
     """a common class for creating various splits among the clients"""
 
     @staticmethod
-    def random_uniform(dataset: datasets.arrow_dataset.Dataset,
-                       settings: dict):
+    def homogeneous(dataset: datasets.arrow_dataset.Dataset,
+                    settings: dict):
         nodes_data = []
         for shard in range(settings['shards']): # Each shard corresponds to one agent.
             agent_data = dataset.shard(num_shards=settings['shards'], index=shard)
@@ -30,6 +39,28 @@ class Shard_Splits:
             nodes_data.append([agent_data['train'], agent_data['test']])
         return nodes_data
     
+    @staticmethod
+    def heterogeneous_size(dataset: datasets.arrow_dataset.Dataset,
+                      settings: dict):
+        nodes_data = []
+        clients = settings['agents']
+        beta = len(dataset) / clients # Average shard size
+        rng = np.random.default_rng(42)
+
+        # Drawing from exponential distribution size of the local sample
+        shards_sizes = rng.exponential(scale=beta, size=clients)
+        shards_sizes = rescale_vector_tosum(vector = shards_sizes, desired_sum = len(dataset))
+        print(shards_sizes)
+
+        dataset = dataset.shuffle(seed=42)
+        moving_idx = 0
+        for agent in range(clients):
+            ag_idx = moving_idx + shards_sizes[agent]
+            agent_data = dataset.select(range(ag_idx))
+            moving_idx = ag_idx
+            agent_data = agent_data.train_test_split(test_size=settings["local_test_size"])
+            nodes_data.append([agent_data['train'], agent_data['test']])
+        return nodes_data
 
     @staticmethod
     def random_imbalanced(dataset: datasets.arrow_dataset.Dataset,

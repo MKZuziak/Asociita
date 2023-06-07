@@ -1,0 +1,12 @@
+{
+    "dataset_name" : "mnist",
+    "split_type" : "heterogeneous_size",
+    "shards": 20,
+    "local_test_size": 0.2,
+    "transformations": {},
+    "imbalanced_clients": {},
+    "save_dataset": true,
+    "save_transformations": true,
+    "save_distribution": true,
+    "print_distribution": true,
+    "agents": 20}
