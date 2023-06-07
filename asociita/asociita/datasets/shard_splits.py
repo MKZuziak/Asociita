@@ -56,14 +56,14 @@ class Shard_Splits:
         moving_idx = 0
         for agent in range(clients):
             ag_idx = moving_idx + shards_sizes[agent]
-            agent_data = dataset.select(range(ag_idx))
+            agent_data = dataset.select(range(moving_idx, ag_idx))
             moving_idx = ag_idx
             agent_data = agent_data.train_test_split(test_size=settings["local_test_size"])
             nodes_data.append([agent_data['train'], agent_data['test']])
         return nodes_data
 
     @staticmethod
-    def random_imbalanced(dataset: datasets.arrow_dataset.Dataset,
+    def dominant_sampling(dataset: datasets.arrow_dataset.Dataset,
                           settings: dict):
         nodes_data = []
         no_agents = settings['agents']
@@ -71,21 +71,11 @@ class Shard_Splits:
         agents = [agent for agent in range(no_agents)]
         pandas_df = dataset.to_pandas().drop('image', axis=1)
         labels = sorted(pandas_df.label.unique())
-
-        save_distribution = False
-        print_distribution = False
-        
-        if settings.get('save_distribution'):
-            distribution_blueprint = []
-            save_distribution = True
-        if settings.get('print_distribution'):
-            print_distribution = True
         if settings.get('custom_sample_size'):
             sample_size = settings['custom_sample_size']
         else:
             sample_size = int(len(dataset) / no_agents)
     
-
         # I) Sampling dominant clients
         for agent in agents:
             if agent in imbalanced_agents:
@@ -102,15 +92,8 @@ class Shard_Splits:
                 sample = pandas_df.sample(n = sample_size, weights='weights', random_state=42)
                 
                 counts = sample['label'].value_counts().sort_index()
-                if print_distribution:
-                    print(f"Distribution of client {agent} is : {counts}")
-                if save_distribution:
-                    ag = counts.to_dict()
-                    distribution = {'agent':agent}
-                    distribution.update(ag)
-                    distribution_blueprint.append(distribution)
                 # 3. Selecting indexes and performing test - train split.
-                sampled_data = dataset.filter(lambda filter, idx: idx in list(sample.index), with_indices=True)
+                sampled_data = dataset.filter(lambda idx: idx in list(sample.index), with_indices=True)
                 agent_data = sampled_data.train_test_split(test_size=settings["local_test_size"])
                 nodes_data.append([agent_data['train'], agent_data['test']])
                 
@@ -120,30 +103,18 @@ class Shard_Splits:
                 nodes_data.append([]) # Inserting placeholder to preserve in-list order.
 
 
-        # II) Sampling balanced clients
+        # II) Sampling non-dominant clients
         for agent in agents:
             if agent not in imbalanced_agents:
                 # 1. Sampling indexes
                 sample = pandas_df.sample(n = sample_size, random_state=42)
                 counts = sample['label'].value_counts().sort_index()
-                if print_distribution:
-                    print(f"Distribution of client {agent} is : {counts}")
-                if save_distribution:
-                    ag = counts.to_dict()
-                    distribution = {'agent':agent}
-                    distribution.update(ag)
-                    distribution_blueprint.append(distribution)
                 # 2. Selecting indexes and performing test - train split.
                 sampled_data = dataset.filter(lambda filter, idx: idx in list(sample.index), with_indices=True)
                 agent_data = sampled_data.train_test_split(test_size=settings["local_test_size"])
                 nodes_data[agent] = ([agent_data['train'], agent_data['test']])
                 # 3. Removing samples indexes
                 pandas_df.drop(sample.index, inplace=True)
-        
-        if save_distribution:
-            Handler.save_csv_file(file = distribution_blueprint,
-                                  saving_path=settings['save_path'],
-                                  file_name='distribution_blueprint.csv')
         return nodes_data
 
     @staticmethod

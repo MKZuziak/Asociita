@@ -7,6 +7,5 @@
     "imbalanced_clients": {},
     "save_dataset": true,
     "save_transformations": true,
-    "save_distribution": true,
-    "print_distribution": true,
+    "save_blueprint": true,
     "agents": 20}
