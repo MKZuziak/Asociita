@@ -93,7 +93,7 @@ class Shard_Splits:
                 
                 counts = sample['label'].value_counts().sort_index()
                 # 3. Selecting indexes and performing test - train split.
-                sampled_data = dataset.filter(lambda idx: idx in list(sample.index), with_indices=True)
+                sampled_data = dataset.filter(lambda filter, idx: idx in list(sample.index), with_indices=True)
                 agent_data = sampled_data.train_test_split(test_size=settings["local_test_size"])
                 nodes_data.append([agent_data['train'], agent_data['test']])
                 
