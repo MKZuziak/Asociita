@@ -1,0 +1,12 @@
+{
+    "dataset_name" : "mnist",
+    "split_type" : "homogeneous",
+    "shards": 7,
+    "local_test_size": 0.2,
+    "transformations": {"0": {"transformation_type":"noise", "noise_multiplyer": 0.5},
+                        "6": {"transformation_type":"noise", "noise_multiplyer": 0.5}},
+    "imbalanced_clients": {},
+    "save_dataset": false,
+    "save_transformations": false,
+    "save_blueprint": false,
+    "agents": 7}

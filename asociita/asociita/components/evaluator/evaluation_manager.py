@@ -1,5 +1,6 @@
 from asociita.components.evaluator.or_evaluator import OR_Evaluator
 from asociita.components.evaluator.sample_evaluator import Sample_Evaluator
+from asociita.components.evaluator.sample_evaluator import Sample_Shapley_Evaluator
 from asociita.models.pytorch.federated_model import FederatedModel
 from asociita.exceptions.evaluatorexception import Sample_Evaluator_Init_Exception
 import copy
@@ -46,14 +47,25 @@ class Evaluation_Manager():
         else:
             self.flag_sample_evaluator = False
 
+        if settings['evaluation'].get("IN_SAMPLE_SHAP"):
+            self.flag_samplesh_evaluator = True
+        else:
+            self.flag_samplesh_evaluator = False
+
 
         # Initialized an instance of the OR_Evaluator (One_Round Evaluator) if a flag is passed.
         if self.flag_shap_or or self.flag_loo_or:
             self.or_evaluator = OR_Evaluator(settings=settings,
                                              model=model)
-        elif self.flag_sample_evaluator == True:
+        if self.flag_sample_evaluator == True:
             try:
                 self.sample_evaluator = Sample_Evaluator(nodes=nodes, iterations=iterations)
+            except NameError as e:
+                raise Sample_Evaluator_Init_Exception
+        
+        if self.flag_samplesh_evaluator == True:
+            try:
+                self.samplesh_evaluator = Sample_Shapley_Evaluator(nodes = nodes, iterations=iterations)
             except NameError as e:
                 raise Sample_Evaluator_Init_Exception
     
@@ -97,9 +109,14 @@ class Evaluation_Manager():
                                         optimizer = optimizer,
                                         final_model = self.updated_c_model,
                                         previous_model= self.previous_c_model)
-    
-
+        if self.flag_samplesh_evaluator:
+            self.samplesh_evaluator.update_shap(gradients = gradients,
+                                                nodes_in_sample = nodes_in_sample,
+                                                iteration = iteration,
+                                                optimizer = optimizer,
+                                                previous_model = self.previous_c_model)
     def finalize_tracking(self):
+        results = []
         if self.flag_shap_or:
             raise NotImplementedError
         
@@ -107,8 +124,14 @@ class Evaluation_Manager():
             raise NotImplementedError
         
         if self.flag_sample_evaluator:
-            psi = self.sample_evaluator.calculate_final_psi()
-            return psi
+            partial_psi, psi = self.sample_evaluator.calculate_final_psi()
+            results.append((partial_psi, psi))
+        
+        if self.flag_samplesh_evaluator:
+            partial_shap, shap = self.samplesh_evaluator.calculate_final_shap()
+            results.append((partial_shap, shap))
+        
+        return results
 
     # def calculate_results(self,
     #                       map_results:bool = True) -> dict[str:dict] | None:

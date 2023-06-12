@@ -130,6 +130,7 @@ class Evaluator_Orchestrator(Orchestrator):
                                                              nodes=nodes_green)
         # 4. FINALIZING PHASE
         # EVALUATING THE RESULTS
-        psi = evaluation_manager.finalize_tracking()
-        print(psi)
+        results = evaluation_manager.finalize_tracking()
+        for result in results:
+            print(result)
         orchestrator_logger.critical("Training complete")

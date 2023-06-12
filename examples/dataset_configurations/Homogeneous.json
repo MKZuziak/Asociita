@@ -1,9 +1,10 @@
 {
-    "dataset_name" : "fmnist",
-    "split_type" : "random_uniform",
+    "dataset_name" : "mnist",
+    "split_type" : "homogeneous",
     "shards": 10,
     "local_test_size": 0.2,
     "transformations": {},
     "save_dataset": true,
     "save_transformations": true,
+    "save_blueprint": false,
     "agents": 10}
