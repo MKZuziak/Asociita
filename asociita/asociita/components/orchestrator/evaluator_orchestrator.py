@@ -130,7 +130,7 @@ class Evaluator_Orchestrator(Orchestrator):
                                                              nodes=nodes_green)
         # 4. FINALIZING PHASE
         # EVALUATING THE RESULTS
-        results = evaluation_manager.finalize_tracking()
+        results = evaluation_manager.finalize_tracking(path = archive_manager.metrics_savepath)
         for result in results:
             print(result)
         orchestrator_logger.critical("Training complete")

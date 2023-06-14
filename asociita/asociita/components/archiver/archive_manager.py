@@ -76,4 +76,10 @@ class Archive_Manager():
                     for node in nodes:
                         node.store_model_on_disk(iteration = iteration,
                                                  path = self.nodes_save_path)
+    
+    def archive_contribution_results(self,
+                                     results: dict,
+                                     mapping: list):
+        pass
+
             

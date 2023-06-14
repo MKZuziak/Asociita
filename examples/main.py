@@ -3,7 +3,7 @@ from asociita.components.orchestrator.fedopt_orchestrator import Fedopt_Orchestr
 from asociita.components.orchestrator.evaluator_orchestrator import Evaluator_Orchestrator
 from asociita.components.nodes.federated_node import FederatedNode
 from asociita.models.pytorch.fmnist import create_FashionMnistNet
-from asociita.models.pytorch.mnist import MnistNet
+from asociita.models.pytorch.mnist import MNIST_CNN
 from asociita.models.pytorch.cifar10 import CifarNet
 from asociita.datasets.fetch_data import load_data
 from asociita.utils.helpers import Helpers
@@ -15,7 +15,7 @@ if __name__ == "__main__":
     # CONFIGURATION: Training configuration
     save_path = os.path.join(os.getcwd(), 'examples')
     settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples',  'simulation_configurations', 'Contribution_example.json'))
-    data_settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'dataset_configurations', 'Homogeneous_Transformation.json'), convert_keys=True)
+    data_settings = Helpers.load_from_json(os.path.join(os.getcwd(), 'examples', 'dataset_configurations', 'Homogeneous.json'), convert_keys=True)
     results_save_path = os.path.join(save_path, "results")
     settings["orchestrator"]["metrics_save_path"] = results_save_path
     settings["orchestrator"]["archiver"]["metrics_savepath"] = results_save_path
@@ -33,7 +33,7 @@ if __name__ == "__main__":
 
 
     # MODEL: Using utils to retrieve a model
-    model = MnistNet()
+    model = MNIST_CNN()
     # SIMULATION: Creating an Orchestrator object
     orchestrator = Evaluator_Orchestrator(settings=settings)
     # SIMULATION: Loading the model onto the orchestrator
