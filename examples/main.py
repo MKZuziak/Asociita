@@ -19,7 +19,7 @@ if __name__ == "__main__":
     results_save_path = os.path.join(save_path, "results")
     settings["orchestrator"]["metrics_save_path"] = results_save_path
     settings["orchestrator"]["archiver"]["metrics_savepath"] = results_save_path
-    settings["orchestrator"]["archiver"]["orchestrator_filename"] = "FMNIST_FEDOPT_YOGI.csv"
+    settings["orchestrator"]["archiver"]["orchestrator_filename"] = "MNIST_FEDOPT_ADAGARD.csv"
     settings["orchestrator"]["archiver"]["central_on_local_filename"] = "central_on_local.csv"
     settings["orchestrator"]["archiver"]["orchestrator_model_save_path"] = results_save_path
     settings["orchestrator"]["archiver"]["nodes_model_save_path"] = results_save_path

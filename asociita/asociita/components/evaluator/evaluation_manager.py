@@ -53,11 +53,11 @@ class Evaluation_Manager():
             self.flag_samplesh_evaluator = False
         
         # Sets up the flag for results preservation
-        if settings['preserve_evaluation'].get("preserve_partial_results"):
+        if settings['evaluation']['preserve_evaluation'].get("preserve_partial_results"):
             self.preserve_partial_results = True
         else:
             self.preserve_partial_results = False
-        if settings['preserve_evaluation'].get("preserve_final_results"):
+        if settings['evaluation']['preserve_evaluation'].get("preserve_final_results"):
             self.preserve_final_results = True
 
 
@@ -94,8 +94,7 @@ class Evaluation_Manager():
     def track_results(self,
                         gradients: dict,
                         nodes_in_sample: list,
-                        iteration: int,
-                        optimizer):
+                        iteration: int):
         """Tracks the models' gradinets.
         Specifically, reconstruct gradients for every possible coalition
         of interest.
@@ -114,18 +113,19 @@ class Evaluation_Manager():
             self.sample_evaluator.update_psi(gradients = gradients,
                                         nodes_in_sample = nodes_in_sample,
                                         iteration = iteration,
-                                        optimizer = optimizer,
+                                        optimizer = self.previous_optimizer,
                                         final_model = self.updated_c_model,
                                         previous_model= self.previous_c_model)
         if self.flag_samplesh_evaluator:
             self.samplesh_evaluator.update_shap(gradients = gradients,
                                                 nodes_in_sample = nodes_in_sample,
                                                 iteration = iteration,
-                                                optimizer = optimizer,
+                                                optimizer = self.previous_optimizeroptimizer,
                                                 previous_model = self.previous_c_model)
     def finalize_tracking(self,
                           path: str = None):
-        results = {}
+        results = {'partial': {}, 'full': {}}
+
         if self.flag_shap_or:
             raise NotImplementedError
         
@@ -139,7 +139,6 @@ class Evaluation_Manager():
         
         if self.flag_samplesh_evaluator:
             partial_shap, shap = self.samplesh_evaluator.calculate_final_shap()
-            results.append((partial_shap, shap))
             results['partial']['partial_shap'] = partial_shap
             results['full']['shap'] = shap
         
@@ -147,21 +146,20 @@ class Evaluation_Manager():
             for metric, values in results['partial'].items():
                 s_path = os.path.join(path, (str(metric) + '.csv'))
                 field_names = values[0].keys() # Field names == nodes id's (keys)
-                with open(s_path, 'w+') as csv_file:
+                with open(s_path, 'w+', newline='') as csv_file:
                     csv_writer = csv.DictWriter(csv_file, fieldnames=field_names)
                     csv_writer.writeheader()
-                    for row in values:
+                    for row in values.values():
                         csv_writer.writerow(row)
         
         if self.preserve_final_results == True: #TODO: ADD TO INITIALIZATION
-            for metric, values in results['partial'].items():
+            for metric, values in results['full'].items():
                 s_path = os.path.join(path, (str(metric) + '.csv'))
                 field_names = values.keys() # Field names == nodes id's (keys)
-                with open(s_path, 'w+') as csv_file:
+                with open(s_path, 'w+', newline='') as csv_file:
                     csv_writer = csv.DictWriter(csv_file, fieldnames=field_names)
                     csv_writer.writeheader()
-                    for row in values:
-                        csv_writer.writerow(row)
+                    csv_writer.writerow(values)
         return results
 
     # def calculate_results(self,

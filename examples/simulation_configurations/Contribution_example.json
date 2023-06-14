@@ -1,6 +1,6 @@
 {
     "orchestrator": {
-        "iterations": 2,
+        "iterations": 5,
         "number_of_nodes": 3,
         "local_warm_start": false,
         "sample_size": 3,
@@ -15,7 +15,7 @@
             "Shapley_OR": false,
             "IN_SAMPLE_LOO": true,
             "IN_SAMPLE_SHAP": true,
-            "evaluation_preserve": {
+            "preserve_evaluation": {
                 "preserve_partial_results": true,
                 "preserve_final_results": true
             }
@@ -40,7 +40,7 @@
         2]
     },
     "nodes":{
-    "local_epochs": 3,
+    "local_epochs": 4,
     "model_settings": {
         "optimizer": "RMS",
         "batch_size": 64,

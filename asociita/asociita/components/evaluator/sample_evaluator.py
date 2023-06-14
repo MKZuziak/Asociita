@@ -54,7 +54,7 @@ class Sample_Evaluator():
 
 
     def calculate_final_psi(self):
-        for iteration, iteration_results in self.partial_psi.items():
+        for iteration_results in self.partial_psi.values():
             for node, value in iteration_results.items():
                 self.psi[node] += np.float64(value)
         return (self.partial_psi, self.psi)
@@ -126,7 +126,7 @@ class Sample_Shapley_Evaluator():
     
 
     def calculate_final_shap(self):
-        for iteration, iteration_results in self.partial_shapley.items():
+        for iteration_results in self.partial_shapley.values():
             for node, value in iteration_results.items():
                 self.shapley[node] += np.float64(value)
         return (self.partial_shapley, self.shapley)

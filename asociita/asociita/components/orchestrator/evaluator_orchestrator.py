@@ -117,8 +117,7 @@ class Evaluator_Orchestrator(Orchestrator):
                     # TRACKING GRADIENTS FOR EVALUATION
                     evaluation_manager.track_results(gradients = gradients,
                                                      nodes_in_sample = sampled_nodes,
-                                                     iteration = iteration,
-                                                     optimizer = Optim) # TRACKING FUNCTION -> CHANGE IF NEEDED
+                                                     iteration = iteration) # TRACKING FUNCTION -> CHANGE IF NEEDED
                     
                     ### WEIGHTS UPDATE
                     # Updating the nodes
@@ -131,6 +130,4 @@ class Evaluator_Orchestrator(Orchestrator):
         # 4. FINALIZING PHASE
         # EVALUATING THE RESULTS
         results = evaluation_manager.finalize_tracking(path = archive_manager.metrics_savepath)
-        for result in results:
-            print(result)
         orchestrator_logger.critical("Training complete")
