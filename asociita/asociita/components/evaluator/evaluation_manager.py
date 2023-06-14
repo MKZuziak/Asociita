@@ -120,7 +120,7 @@ class Evaluation_Manager():
             self.samplesh_evaluator.update_shap(gradients = gradients,
                                                 nodes_in_sample = nodes_in_sample,
                                                 iteration = iteration,
-                                                optimizer = self.previous_optimizeroptimizer,
+                                                optimizer = self.previous_optimizer,
                                                 previous_model = self.previous_c_model)
     def finalize_tracking(self,
                           path: str = None):

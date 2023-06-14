@@ -211,3 +211,9 @@ examples/datasets/MNIST_8_dataset
 examples/datasets/MNIST_5_dataset
 examples/datasets/MNIST_20_dataset
 examples/datasets/MNIST_20_dataset_blueprint.csv
+examples/datasets/MNIST_10_dataset_blueprint.csv
+examples/results/MNIST_FEDOPT_ADAGARD.csv
+examples/results/partial_psi.csv
+examples/results/partial_shap.csv
+examples/results/psi.csv
+examples/results/shap.csv

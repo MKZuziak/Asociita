@@ -1,10 +1,10 @@
 {
     "dataset_name" : "mnist",
     "split_type" : "homogeneous",
-    "shards": 3,
+    "shards": 5,
     "local_test_size": 0.2,
     "transformations": {},
     "save_dataset": false,
     "save_transformations": false,
-    "save_blueprint": false,
-    "agents": 3}
+    "save_blueprint": true,
+    "agents": 5}
