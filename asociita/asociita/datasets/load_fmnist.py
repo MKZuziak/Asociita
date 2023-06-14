@@ -8,9 +8,9 @@ import copy
 import pandas as pd
 import numpy as np
 
-def load_mnist(settings: dict) -> list[datasets.arrow_dataset.Dataset,
+def load_fmnist(settings: dict) -> list[datasets.arrow_dataset.Dataset,
                                        list[list[list[datasets.arrow_dataset.Dataset]]]]:
-    """Loads the MNIST dataset, splits it into the number of shards, pre-process selected
+    """Loads the FMNIST dataset, splits it into the number of shards, pre-process selected
     shards (subsets) and returns in a following format:
     list[   
         "Orchestrator Data"[
@@ -34,9 +34,9 @@ def load_mnist(settings: dict) -> list[datasets.arrow_dataset.Dataset,
                                        list[list[list[datasets.arrow_dataset.Dataset]]]]"""
     
     # Using the 'test' data as a orchestrator validaiton set.
-    orchestrator_data = load_dataset('mnist', split='test')
+    orchestrator_data = load_dataset('fashion_mnist', split='test')
     # Using the 'train' data as a dataset reserved for agents
-    dataset = load_dataset('mnist', split='train')
+    dataset = load_dataset('fashion_mnist', split='train')
 
     # Type: Homogeneous Size and Distribution (Sharding) -> Same size, similar distribution 
     if settings['split_type'] == 'homogeneous':

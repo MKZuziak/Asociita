@@ -16,6 +16,7 @@ class Loggers:
         ch.setLevel(logging.DEBUG)
         ch.setFormatter(formatter)
         orchestrator_logger.addHandler(ch)
+        orchestrator_logger.propagate = False
         return orchestrator_logger
     
 
@@ -25,11 +26,12 @@ class Loggers:
         node_logger = logging.getLogger("node_logger")
         node_logger.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        node_logger.debug("The default level of Orchestrator logger is set to: DEFAULT.")
+        node_logger.debug("The default level of Node logger is set to: DEFAULT.")
         zh = logging.StreamHandler()
         zh.setLevel(logging.DEBUG)
         zh.setFormatter(formatter)
         node_logger.addHandler(zh)
+        node_logger.propagate = False
         return node_logger
     
 
@@ -39,9 +41,10 @@ class Loggers:
         model_logger = logging.getLogger("model_logger")
         model_logger.setLevel(logging.DEBUG)
         formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-        model_logger.debug("The default level of Orchestrator logger is set to: DEFAULT.")
+        model_logger.debug("The default level of Model logger is set to: DEFAULT.")
         sh = logging.StreamHandler()
         sh.setLevel(logging.DEBUG)
         sh.setFormatter(formatter)
         model_logger.addHandler(sh)
+        model_logger.propagate = False
         return model_logger

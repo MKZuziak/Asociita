@@ -40,15 +40,20 @@ def load_cifar(settings: dict) -> list[datasets.arrow_dataset.Dataset,
     orchestrator_data = orchestrator_data.rename_column('img', 'image')
     dataset = dataset.rename_column('img', 'image')
 
-    # Type: Random Uniform (Sharding) -> Same size, random distribution
-    if settings['split_type'] == 'random_uniform':
-        return [orchestrator_data, Shard_Splits.random_uniform(dataset=dataset, settings=settings)]
+    # Type: Homogeneous Size and Distribution (Sharding) -> Same size, similar distribution 
+    if settings['split_type'] == 'homogeneous':
+        return [orchestrator_data, Shard_Splits.homogeneous(dataset=dataset, settings=settings)]
     
-    # Type: Uniform with Imbalanced Classes -> Samze size, different (random) distributions with heavy imbalance on selected clients
-    if settings['split_type'] == 'random_imbalanced':
-        return [orchestrator_data, Shard_Splits.random_imbalanced(dataset=dataset, settings=settings)]
+    # Type: Heterogeneous Size, Homogeneous Distribution -> Differeny size (draws from exponential distribution), similar distribution
+    elif settings['split_type'] == 'heterogeneous_size':
+        return [orchestrator_data, Shard_Splits.heterogeneous_size(dataset=dataset, settings=settings)]
+    
+    # Type: Dominant clients are sampled first according to the pre-defined in-sample distribution. Then rest of the clients draws from 
+    # left-over data instances
+    elif settings['split_type'] == "dominant_sampling":
+        return [orchestrator_data, Shard_Splits.dominant_sampling(dataset=dataset, settings=settings)]
 
-    # Type: Same Dataset -> One dataset copied n times.
+    # Type: Dataset replication -> One dataset copied n times.
     elif settings['split_type'] == 'replicate_same_dataset':
         return [orchestrator_data, Shard_Splits.replicate_same_dataset(dataset=dataset, settings=settings)]
     
@@ -58,3 +63,4 @@ def load_cifar(settings: dict) -> list[datasets.arrow_dataset.Dataset,
     
     else:
         raise "Unable to generate the dataset. Provided split-type does not exist."
+            

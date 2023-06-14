@@ -1,18 +1,24 @@
 {
     "orchestrator": {
-        "iterations": 3,
-        "number_of_nodes": 4,
+        "iterations": 2,
+        "number_of_nodes": 3,
         "local_warm_start": false,
-        "sample_size": 4,
+        "sample_size": 3,
         "optimizer": {
             "name": "FedAdagard",
-            "learning_rate": 0.1,
+            "learning_rate": 0.03162277660168379,
             "b1": 0.3,
-            "tau": 0.001},
+            "tau": 0.01},
         "metrics_save_path": "None",
         "evaluation": {
-            "LOO_OR": true,
-            "Shapley_OR": true
+            "LOO_OR": false,
+            "Shapley_OR": false,
+            "IN_SAMPLE_LOO": true,
+            "IN_SAMPLE_SHAP": true,
+            "evaluation_preserve": {
+                "preserve_partial_results": true,
+                "preserve_final_results": true
+            }
         },
         "archiver":{
             "orchestrator": true,
@@ -31,15 +37,13 @@
         "nodes": [
         0,
         1,
-        2,
-        3]
+        2]
     },
     "nodes":{
-    "local_epochs": 2,
+    "local_epochs": 3,
     "model_settings": {
         "optimizer": "RMS",
-        "batch_size": 32,
-        "learning_rate": 0.001,
-        "features_name": "img"}
+        "batch_size": 64,
+        "learning_rate": 0.0031622776601683794}
         }
 }

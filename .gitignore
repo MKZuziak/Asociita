@@ -201,3 +201,13 @@ examples/simulation_configurations/Basic_example.json
 examples/simulation_configurations/Basic_Fedopt_example.json
 examples/simulation_configurations/Contribution_example.json
 examples/simulation_configurations/FedAdagard_example.json
+examples/datasets/FMNIST_5_dataset
+examples/datasets/FMNIST_4_dataset
+examples/results/FMNIST_SIMPLE.csv
+examples/results/FMNIST_FEDOPT_YOGI.csv
+examples/datasets/MNIST_10_dataset
+examples/datasets/FMNIST_10_dataset
+examples/datasets/MNIST_8_dataset
+examples/datasets/MNIST_5_dataset
+examples/datasets/MNIST_20_dataset
+examples/datasets/MNIST_20_dataset_blueprint.csv

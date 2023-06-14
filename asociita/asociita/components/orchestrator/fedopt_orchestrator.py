@@ -50,51 +50,48 @@ class Fedopt_Orchestrator(Orchestrator):
         Returns:
             None"""
         
-        # SETTINGS -> CHANGE IF NEEDED
+        # 1. SETTINGS -> CHANGE IF NEEDED
         # GENERAL SETTINGS
-        iterations = self.settings['iterations']
-        nodes_number = self.settings['number_of_nodes']
-        local_warm_start = self.settings["local_warm_start"]
-        nodes = self.settings["nodes"]
-        sample_size = self.settings["sample_size"]
+        iterations = self.settings['iterations'] # Number of iterations of the Fed training, int.
+        nodes_number = self.settings['number_of_nodes'] # Number of nodes prepared for sampling, int.
+        local_warm_start = self.settings["local_warm_start"] # Local warm start for pre-trained models - not implemented yet.
+        nodes = self.settings["nodes"] # List of nodes, list[int]
+        sample_size = self.settings["sample_size"] # Size of the sample, int.
+        # OPTIMIZER SETTINGS
+        optimizer_settings = self.settings["optimizer"] # Dict containing instructions for the optimizer, dict.
+        
+
+        # 2. SET-UP PHASE -> CHANGE IF NEEDED
+        # SETTING-UP EVALUATION MANAGER
         archive_manager = Archive_Manager(archive_manager = self.settings['archiver'],
                                           logger = orchestrator_logger)
-
-        # OPTIMIZER SETTINGS
-        optimizer_settings = self.settings["optimizer"]
-        optimizer_name = optimizer_settings["name"]
-        
         # CREATING FEDERATED NODES
-        nodes_green = create_nodes(nodes, self.node_settings) # Exterior method / function, can override in childr.
-
-
+        nodes_green = create_nodes(nodes, self.node_settings)
         # CREATING LOCAL MODELS (that will be loaded onto nodes)
         model_list = self.model_initialization(nodes_number=nodes_number,
-                                               model=self.central_net) # Exterior method / function, can overide in childr.
-        
+                                               model=self.central_net)
         # INITIALIZING ALL THE NODES
-        nodes_green = self.nodes_initialization(nodes_list=nodes_green, # Exterion method / function, can overide in child.
+        nodes_green = self.nodes_initialization(nodes_list=nodes_green,
                                                 model_list=model_list,
                                                 data_list=nodes_data,
                                                 nodes_number=nodes_number)
-        
-        Optim = Optimizers(weights = self.central_model.get_weights()) # Setting up the Optim.
-        
-        # TRAINING PHASE ----- FEDOPT
-        with Manager() as manager:
-            # create the shared queue
-            queue = manager.Queue()
+        # SETTING UP THE OPTIMIZER
+        Optim = Optimizers(weights = self.central_model.get_weights(),
+                           settings=optimizer_settings)
 
+
+        # 3. TRAINING PHASE ----- FEDOPT
+        with Manager() as manager:
             # create the pool of workers
             with Pool(sample_size) as pool:
                 for iteration in range(iterations):
                     orchestrator_logger.info(f"Iteration {iteration}")
                     gradients = {}
-                    
                     # Sampling nodes and asynchronously apply the function
-                    sampled_nodes = sample_nodes(nodes_green, 
+                    sampled_nodes, sampled_idx = sample_nodes(nodes_green, 
                                                  sample_size=sample_size,
-                                                 orchestrator_logger=orchestrator_logger) # SAMPLING FUNCTION -> CHANGE IF NEEDED
+                                                 orchestrator_logger=orchestrator_logger,
+                                                 return_aux=True) # SAMPLING FUNCTION -> CHANGE IF NEEDED
                     results = [pool.apply_async(train_nodes, (node, 'gradients')) for node in sampled_nodes]
                     # consume the results
                     for result in results:
@@ -103,18 +100,17 @@ class Fedopt_Orchestrator(Orchestrator):
                     
                     # Computing the average of gradients
                     grad_avg = Aggregators.compute_average(gradients) # AGGREGATING FUNCTION -> CHANGE IF NEEDED
-                    updated_weights = Optim.fed_optimize(optimizer=optimizer_name,
-                                                         settings=optimizer_settings,
-                                                         weights=self.central_model.get_weights(),
+                    updated_weights = Optim.fed_optimize(weights=self.central_model.get_weights(),
                                                          delta=grad_avg)
+                    self.central_model.update_weights(updated_weights) # Updating the central model
+                    ### WEIGHTS UPDATE
                     # Updating the nodes
                     for node in nodes_green:
                         node.model.update_weights(updated_weights)
-                    # Upadting the orchestrator
-                    self.central_model.update_weights(updated_weights)
-
+                    # Upadting the orchestrator                 
                     archive_manager.archive_training_results(iteration = iteration,
                                                              central_model=self.central_model,
                                                              nodes=nodes_green)
-        
+        # 4. FINALIZING PHASE
+        # EVALUATING THE RESULTS
         orchestrator_logger.critical("Training complete")
