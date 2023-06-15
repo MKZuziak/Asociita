@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "asociita"
-version = "0.1.10.3"
+version = "0.1.10.4"
 description = "An intuitive and modular simulator for assessing the marginal value of a client's contribution in a decentralized setting."
 authors = ["Maciej Zuziak <maciejkrzysztof.zuziak@isti.cnr.it>"]
 license = "MIT"

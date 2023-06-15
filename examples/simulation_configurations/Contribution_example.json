@@ -1,7 +1,7 @@
 {
     "orchestrator": {
-        "iterations": 2,
-        "number_of_nodes": 12,
+        "iterations": 10,
+        "number_of_nodes": 5,
         "local_warm_start": false,
         "sample_size": 2,
         "optimizer": {
@@ -20,7 +20,7 @@
                 "preserve_final_results": true
             },
             "scheduler":{
-                "in_sample_loo": [1, 2, 3, 4, 5],
+                "in_sample_loo": [0, 2, 3, 4, 5],
                 "in_sample_shap": [1, 5]
             }
         },
@@ -43,14 +43,7 @@
         1,
         2,
         3,
-        4,
-        5,
-        6,
-        7,
-        8,
-        9,
-        10,
-        11]
+        4]
     },
     "nodes":{
     "local_epochs": 3,

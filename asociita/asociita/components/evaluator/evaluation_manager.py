@@ -133,7 +133,7 @@ class Evaluation_Manager():
                 self.samplesh_evaluator.update_shap(gradients = gradients,
                                                     nodes_in_sample = nodes_in_sample,
                                                     iteration = iteration,
-                                                    optimizer = self.previous_optimizeroptimizer,
+                                                    optimizer = self.previous_optimizer,
                                                     previous_model = self.previous_c_model)
     def finalize_tracking(self,
                           path: str = None):
@@ -158,11 +158,13 @@ class Evaluation_Manager():
         if self.preserve_partial_results == True: #TODO: ADD TO INITIALIZATION
             for metric, values in results['partial'].items():
                 s_path = os.path.join(path, (str(metric) + '.csv'))
-                field_names = self.nodes # Field names == nodes id's (keys)
+                field_names = self.nodes
+                field_names.append('iteration') # Field names == nodes id's (keys)
                 with open(s_path, 'w+', newline='') as csv_file:
                     csv_writer = csv.DictWriter(csv_file, fieldnames=field_names)
                     csv_writer.writeheader()
-                    for row in values.values():
+                    for iteration, row in values.items():
+                        row['iteration'] = iteration
                         csv_writer.writerow(row)
         
         if self.preserve_final_results == True: #TODO: ADD TO INITIALIZATION
