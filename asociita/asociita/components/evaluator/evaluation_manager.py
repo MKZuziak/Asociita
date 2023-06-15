@@ -29,6 +29,7 @@ class Evaluation_Manager():
         self.previous_c_model = None
         self.updated_c_model = None
         self.previous_optimizer = None
+        self.nodes = nodes
         # Sets up the flag for each available method of evaluation.
         self.compiled_flags = []
         if settings['evaluation'].get("Shapley_OR"):
@@ -157,7 +158,7 @@ class Evaluation_Manager():
         if self.preserve_partial_results == True: #TODO: ADD TO INITIALIZATION
             for metric, values in results['partial'].items():
                 s_path = os.path.join(path, (str(metric) + '.csv'))
-                field_names = values[0].keys() # Field names == nodes id's (keys)
+                field_names = self.nodes # Field names == nodes id's (keys)
                 with open(s_path, 'w+', newline='') as csv_file:
                     csv_writer = csv.DictWriter(csv_file, fieldnames=field_names)
                     csv_writer.writeheader()
