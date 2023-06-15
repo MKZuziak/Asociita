@@ -22,7 +22,7 @@ class Sample_Evaluator():
                  nodes: list,
                  iterations: int) -> None:
         self.psi = {node: np.float64(0) for node in nodes} # Hash map containing all the nodes and their respective marginal contribution values.
-        self.partial_psi = {round:{} for round in range(iterations)} # Hash map containing all the partial psi for each sampled subset.
+        self.partial_psi = {round:{node: np.float64(0) for node in nodes} for round in range(iterations)} # Hash map containing all the partial psi for each sampled subset.
 
 
     def update_psi(self,
@@ -65,7 +65,7 @@ class Sample_Shapley_Evaluator():
                  nodes: list,
                  iterations: int) -> None:
         self.shapley = {node: np.float64(0) for node in nodes} # Hash map containing all the nodes and their respective marginal contribution values.
-        self.partial_shapley = {round:{} for round in range(iterations)} # Hash map containing all the partial psi for each sampled subset.
+        self.partial_shapley = {round:{node: np.float64(0) for node in nodes} for round in range(iterations)} # Hash map containing all the partial psi for each sampled subset.
     
 
     def update_shap(self,
