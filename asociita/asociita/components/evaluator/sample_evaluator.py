@@ -99,7 +99,7 @@ class Sample_Shapley_Evaluator():
                         s_wo_i_grad_avg = Aggregators.compute_average(s_wo_i_gradients)
                         s_wo_i_weights = s_wo_i_optim.fed_optimize(weights = s_wo_i_model.get_weights(), delta = s_wo_i_grad_avg)
                         s_wo_i_model.update_weights(s_wo_i_weights)
-                        s_wo_i_score = s_wo_i_model.evaluate_model()[1]
+                        s_wo_i_score = s_wo_i_model.quick_evaluate()[1]
                         recorded_values[s_wo_i] = s_wo_i_score
                         operation_counter += 1
 
@@ -114,7 +114,7 @@ class Sample_Shapley_Evaluator():
                         s_w_i_grad_avg = Aggregators.compute_average(s_w_i_gradients)
                         s_w_i_weights = s_w_i_optim.fed_optimize(weights = s_w_i_model.get_weights(), delta = s_w_i_grad_avg)
                         s_w_i_model.update_weights(s_w_i_weights)
-                        s_w_i_score = s_w_i_model.evaluate_model()[1]
+                        s_w_i_score = s_w_i_model.quick_evaluate()[1]
                         recorded_values[s_w_i] = s_w_i_score
                         operation_counter += 1
                     

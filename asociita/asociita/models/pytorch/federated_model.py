@@ -379,6 +379,43 @@ class FederatedModel:
                     false_positive_rate
                 )
 
+    def quick_evaluate(self) -> tuple[float, float]:
+        """Quicker version of the evaluate_model(function) 
+        Validate the network on the local test set returning only the loss and accuracy.
+            Raises
+            ------
+                Exception: Raises an exception when Federated Learning is not initialized
+            Returns
+            -------
+                Tuple[float, float]: loss and accuracy on the test set.
+            """
+        with torch.no_grad():
+            if self.net:
+                self.net.eval()
+                criterion = nn.CrossEntropyLoss()
+                test_loss = 0
+                correct = 0
+                total = 0
+                losses = []
+                with torch.no_grad():
+                    for _, dic in enumerate(self.testloader):
+                        data = dic['image']
+                        target = dic['label']
+                        data, target = data.to(self.device), target.to(self.device)
+                        output = self.net(data)
+                        total += target.size(0)
+                        test_loss = criterion(output, target).item()
+                        losses.append(test_loss)
+                        pred = output.argmax(dim=1, keepdim=True)
+                        correct += pred.eq(target.view_as(pred)).sum().item()
+                    test_loss = np.mean(losses)
+                    accuracy = correct / total
+
+                    return (
+                        test_loss,
+                        accuracy
+                    )
+
 
     def transform_func(self,
                        data):
