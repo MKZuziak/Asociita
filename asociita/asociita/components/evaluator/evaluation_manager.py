@@ -30,25 +30,30 @@ class Evaluation_Manager():
         self.updated_c_model = None
         self.previous_optimizer = None
         # Sets up the flag for each available method of evaluation.
+        self.compiled_flags = []
         if settings['evaluation'].get("Shapley_OR"):
             self.flag_shap_or = True
+            self.compiled_flags.append('shapley_or')
             raise NotImplementedError # TODO
         else:
             self.flag_shap_or = False
         
         if settings['evaluation'].get("LOO_OR"):
             self.flag_loo_or = True
+            self.compiled_flags.append('loo_or')
             raise NotImplementedError # TODO
         else:
             self.flag_loo_or = False
         
         if settings['evaluation'].get("IN_SAMPLE_LOO"):
             self.flag_sample_evaluator = True
+            self.compiled_flags.append('in_sample_loo')
         else:
             self.flag_sample_evaluator = False
 
         if settings['evaluation'].get("IN_SAMPLE_SHAP"):
             self.flag_samplesh_evaluator = True
+            self.compiled_flags.append('in_sample_shap')
         else:
             self.flag_samplesh_evaluator = False
         
@@ -59,7 +64,6 @@ class Evaluation_Manager():
             self.preserve_partial_results = False
         if settings['evaluation']['preserve_evaluation'].get("preserve_final_results"):
             self.preserve_final_results = True
-
 
         # Initialized an instance of the OR_Evaluator (One_Round Evaluator) if a flag is passed.
         if self.flag_shap_or or self.flag_loo_or:
@@ -76,6 +80,12 @@ class Evaluation_Manager():
                 self.samplesh_evaluator = Sample_Shapley_Evaluator(nodes = nodes, iterations=iterations)
             except NameError as e:
                 raise Sample_Evaluator_Init_Exception
+        
+        # Set-up a scheduler
+        if settings["evaluation"].get("scheduler"):
+            self.scheduler = settings['evaluation']['scheduler']
+        else:
+            self.scheduler = {flag: [iteration for iteration in range(iterations)] for flag in self.compiled_flags}
     
 
     def preserve_previous_model(self,
@@ -110,18 +120,20 @@ class Evaluation_Manager():
             self.or_evaluator.track_loo(gradients=gradients)
         
         if self.flag_sample_evaluator:
-            self.sample_evaluator.update_psi(gradients = gradients,
-                                        nodes_in_sample = nodes_in_sample,
-                                        iteration = iteration,
-                                        optimizer = self.previous_optimizer,
-                                        final_model = self.updated_c_model,
-                                        previous_model= self.previous_c_model)
+            if iteration in self.scheduler['in_sample_loo']:
+                self.sample_evaluator.update_psi(gradients = gradients,
+                                            nodes_in_sample = nodes_in_sample,
+                                            iteration = iteration,
+                                            optimizer = self.previous_optimizer,
+                                            final_model = self.updated_c_model,
+                                            previous_model= self.previous_c_model)
         if self.flag_samplesh_evaluator:
-            self.samplesh_evaluator.update_shap(gradients = gradients,
-                                                nodes_in_sample = nodes_in_sample,
-                                                iteration = iteration,
-                                                optimizer = self.previous_optimizeroptimizer,
-                                                previous_model = self.previous_c_model)
+            if iteration in self.scheduler['in_sample_shap']:
+                self.samplesh_evaluator.update_shap(gradients = gradients,
+                                                    nodes_in_sample = nodes_in_sample,
+                                                    iteration = iteration,
+                                                    optimizer = self.previous_optimizeroptimizer,
+                                                    previous_model = self.previous_c_model)
     def finalize_tracking(self,
                           path: str = None):
         results = {'partial': {}, 'full': {}}

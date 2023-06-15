@@ -18,6 +18,10 @@
             "preserve_evaluation": {
                 "preserve_partial_results": true,
                 "preserve_final_results": true
+            },
+            "scheduler":{
+                "in_sample_loo": [1, 2, 3, 4, 5],
+                "in_sample_shap": [1, 5]
             }
         },
         "archiver":{
