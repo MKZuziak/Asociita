@@ -1,0 +1,1 @@
+[15.06.2023][unit_tests\components\settings\SettingsInitTestCase] - Test correct behaviours in case of failed initialization

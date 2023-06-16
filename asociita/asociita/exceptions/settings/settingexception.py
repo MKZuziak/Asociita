@@ -6,3 +6,6 @@ class DatasetSettingsException(Exception):
 
 class ArchiverSettingsException(Exception):
     """The Archiver Configuration is missing key-arguments"""
+
+class SettingsObjectException(Exception):
+    """The settings object is missing key-arguments"""
