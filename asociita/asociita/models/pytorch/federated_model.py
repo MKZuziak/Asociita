@@ -11,6 +11,7 @@ from torch import nn, optim
 from torchvision import transforms
 from sklearn.metrics import f1_score, recall_score, confusion_matrix, precision_score
 import os
+from asociita.exceptions.modelexception import ModelException
 
 from asociita.utils.loggers import Loggers
 
@@ -78,18 +79,18 @@ class FederatedModel:
 
         # Choosing an optimizer based on settings
         if self.settings['optimizer'] == "Adam":
-            raise "Using Adam Optimizer has not been implemented yet."
+            raise NotImplementedError("Using Adam Optimizer has not been implemented yet.")
             # TODO #self.optimizer = torch.optim.Adam(...
         elif self.settings['optimizer'] == "SGD":
-            raise "Using SGD Optimizer has not been implemented yet."
+            raise NotImplementedError("Using SGD Optimizer has not been implemented yet.")
             #TODO # self.optimizer = torch.optim.SGD(...
         elif self.settings['optimizer'] == "RMS":
             self.optimizer = optim.RMSprop(
                 params_to_update,
                 lr=self.settings["learning_rate"],)
         else:
-            raise "The provided optimizer name may be incorrect or not implemeneted.\
-            Please provide list[train_set, test_set] or list[test_set]"
+            raise ModelException("The provided optimizer name may be incorrect or not implemeneted.\
+            Please provide list[train_set, test_set] or list[test_set]")
 
 
     def prepare_data(

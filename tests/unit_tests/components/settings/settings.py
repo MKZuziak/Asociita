@@ -10,7 +10,7 @@ class SettingsInitTestCase(unittest.TestCase):
                 "local_warm_start": False,
                 "sample_size": 2,
                 "metrics_save_path": "None",
-                'enable_archiver': True,
+                'enable_archiver': False,
                 "nodes": [
                 0,
                 1,

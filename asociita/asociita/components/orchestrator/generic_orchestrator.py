@@ -7,6 +7,7 @@ from asociita.utils.handlers import Handler
 from asociita.utils.loggers import Loggers
 from asociita.utils.orchestrations import prepare_nodes, create_nodes, check_health, sample_nodes, train_nodes
 from asociita.components.archiver.archive_manager import Archive_Manager
+from asociita.components.settings.settings import Settings
 from multiprocessing import Pool, Manager
 from torch import nn
 
@@ -17,7 +18,7 @@ set_start_method("spawn", force=True)
 
 class Orchestrator():
     def __init__(self, 
-                 settings: dict) -> None:
+                 settings: Settings) -> None:
         """Orchestrator is a central object necessary for performing the simulation.
         It connects the nodes, maintain the knowledge about their state and manages the
         multithread pool. generic_orchestrator.orchestrator is a parent to all more
@@ -25,23 +26,14 @@ class Orchestrator():
         
         -------------
         Args
-            settings (dict): dictionary object cotaining all the settings of the orchestrator.
+            settings (settings): Settings object cotaining all the settings of the orchestrator.
        -------------
          Returns
             None"""
-        self.settings = settings["orchestrator"] # Settings attribute (dict)
-        self.node_settings = settings["nodes"]
+        self.settings = settings
         self.model = None
-        if self.settings.get('training_metrics'):
-            self.training_metrics_filename = self.settings['training_metrics']
-        else:
-            self.training_metrics_filename = 'training_metrics.csv'
-        if self.settings.get('nodes_metrics'):
-            self.nodes_metrics_filename = self.settings['nodes_metrics']
-        else:
-            self.nodes_metrics_filename = 'nodes_metrics.csv'
     
-
+    
     def prepare_orchestrator(self, 
                              model: Any,
                              validation_data: datasets.arrow_dataset.Dataset,
@@ -59,7 +51,7 @@ class Orchestrator():
             None"""
         self.validation_data = [validation_data]
         self.central_net = model
-        self.central_model = FederatedModel(settings = self.node_settings["model_settings"],
+        self.central_model = FederatedModel(settings = self.settings.model_settings,
                                         net=model,
                                         local_dataset=self.validation_data,
                                         node_name='orchestrator')
@@ -90,10 +82,9 @@ class Orchestrator():
             tuple(node_id: str, weights)
         """
         if local_warm_start == True:
-            raise("Beginning the training with different local models not implemented yet.")
+            raise NotImplementedError("Local warm start is not implemented yet.")
         else:
             model_list = [copy.deepcopy(model) for _ in range(nodes_number)]
-
         return model_list
 
 
@@ -133,30 +124,6 @@ class Orchestrator():
                 nodes_green.append(result)
         return nodes_green # Returning initialized nodes
 
-        
-        # # create the manager
-        # with Manager() as manager:
-        #     # create the shared queue
-        #     queue = manager.Queue()
-        #     # create a pool of workers
-        #     with Pool(nodes_number) as pool:
-        #         # asynchronously apply the function
-        #         results = [
-        #             pool.apply_async(prepare_nodes, (node, model, dataset, queue))
-        #             for node, model, dataset in zip(nodes_list, model_list, data_list)
-        #         ]
-        #         # consume the results
-        #         # Define a list of healthy nodes
-        #         nodes_green = []
-        #         for result in results:
-        #             # query for results
-        #             _ = result.get()
-        #             updated_node = queue.get()
-        #             # Adds to list only if the node is healthy
-        #             if check_health(updated_node,
-        #                             orchestrator_logger=orchestrator_logger):
-        #                 nodes_green.append(updated_node)
-        # return nodes_green # Returning initialized nodes
 
     def train_protocol(self,
                 nodes_data: list[datasets.arrow_dataset.Dataset, 
@@ -176,24 +143,27 @@ class Orchestrator():
             None"""
         
         # SETTINGS -> CHANGE IF NEEDED
-        iterations = self.settings['iterations']
-        nodes_number = self.settings['number_of_nodes']
-        local_warm_start = self.settings["local_warm_start"]
-        nodes = self.settings["nodes"]
-        sample_size = self.settings["sample_size"]
-        archive_manager = Archive_Manager(archive_manager = self.settings['archiver'],
-                                          logger = orchestrator_logger)
+        iterations = self.settings.iterations
+        nodes_number = self.settings.number_of_nodes
+        local_warm_start = self.settings.local_warm_start
+        nodes = [node for node in range(nodes_number)]
+        sample_size = self.settings.sample_size
+        if self.settings.enable_archiver == True:
+            archive_manager = Archive_Manager(
+                archive_manager = self.settings.archiver_settings,
+                logger = orchestrator_logger)
 
         # CREATING FEDERATED NODES
-        nodes_green = create_nodes(nodes, self.node_settings) # Exterior method / function, can override in childr.
+        nodes_green = create_nodes(nodes, 
+                                   self.settings.nodes_settings)
 
 
         # CREATING LOCAL MODELS (that will be loaded onto nodes)
         model_list = self.model_initialization(nodes_number=nodes_number,
-                                               model=self.central_net) # Exterior method / function, can overide in childr.
+                                               model=self.central_net)
         
         # INITIALIZING ALL THE NODES
-        nodes_green = self.nodes_initialization(nodes_list=nodes_green, # Exterion method / function, can overide in child.
+        nodes_green = self.nodes_initialization(nodes_list=nodes_green,
                                                 model_list=model_list,
                                                 data_list=nodes_data,
                                                 nodes_number=nodes_number)
@@ -228,4 +198,5 @@ class Orchestrator():
                                                              nodes=nodes_green)
 
         orchestrator_logger.critical("Training complete")
+        return 0
                     

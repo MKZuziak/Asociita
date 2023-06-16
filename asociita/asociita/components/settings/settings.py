@@ -32,15 +32,15 @@ class Settings():
         # Nodes settings initialization
         try:
             self.nodes_settings = dict_settings['nodes']
+            self.model_settings = dict_settings['nodes']['model_settings']
             self.local_epochs = self.nodes_settings['local_epochs']
             self.optimizer = self.nodes_settings['model_settings']['optimizer']
             self.batch_size = self.nodes_settings['model_settings']['batch_size']
             self.lr = self.nodes_settings['model_settings']['learning_rate']
         except KeyError:
             raise SettingsObjectException("The provided orchestrator settings are incomplete. The nodes settings should contain " \
-            "the following parameters: the number of local epochs ('locla_epochs': int), optimizer ('optimizer': str), " \
+            "the following parameters: the number of local epochs ('locla_e`pochs': int), optimizer ('optimizer': str), " \
             "batch size ('batch_size': str) and learning rate ('learning rate' : float).")
-
         if self.enable_archiver:
             try:
                 self.archiver_settings = self.orchestrator_settings['archiver_settings']
