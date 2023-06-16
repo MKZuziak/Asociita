@@ -11,12 +11,8 @@ class SettingsInitTestCase(unittest.TestCase):
                 "sample_size": 2,
                 "metrics_save_path": "None",
                 'enable_archiver': False,
-                "nodes": [
-                0,
-                1,
-                2,
-                3,
-                4]
+                'enable_optimizer': False,
+                'enable_evaluator':False
             },
             "nodes":{
             "local_epochs": 3,
@@ -35,7 +31,6 @@ class SettingsInitTestCase(unittest.TestCase):
         self.assertEqual(self.settings.iterations, 10)
         self.assertEqual(self.settings.number_of_nodes, 5)
         self.assertEqual(self.settings.local_warm_start, False)
-        self.assertEqual(self.settings.metrics_save_path, 'None')
         self.assertEqual(self.settings.optimizer, 'RMS')
         self.assertEqual(self.settings.batch_size, 64)
         self.assertEqual(self.settings.sample_size, 2)

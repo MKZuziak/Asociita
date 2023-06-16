@@ -22,13 +22,14 @@ class Settings():
             self.number_of_nodes = self.orchestrator_settings['number_of_nodes']
             self.local_warm_start = self.orchestrator_settings['local_warm_start']
             self.sample_size = self.orchestrator_settings['sample_size']
-            self.metrics_save_path = self.orchestrator_settings['metrics_save_path']
             self.enable_archiver = self.orchestrator_settings['enable_archiver']
+            self.enable_optimizer = self.orchestrator_settings['enable_optimizer']
+            self.enable_evaluator = self.orchestrator_settings['enable_evaluator']
         except KeyError:
             raise SettingsObjectException("The provided orchestrator settings are incomplete. The orchestrator settings should contain " \
             "the following parameters: the number of iterations ('iterations': int), number of nodes ('number_of_nodes': int), " \
-            "local warm start ('local_warm_start': bool), sample size ('sample_size':int), metrics save path ('metrics_save_path' : str or Path) "\
-                "and whether to enable the archiver ('enable_archiver': bool).")
+            "local warm start ('local_warm_start': bool), sample size ('sample_size':int) "\
+                "and whether to enable the archiver ('enable_archiver': bool), optimizer ('enable_optimizer': bool) and evaluator ('enable_evaluator': bool).")
         # Nodes settings initialization
         try:
             self.nodes_settings = dict_settings['nodes']
@@ -41,10 +42,19 @@ class Settings():
             raise SettingsObjectException("The provided orchestrator settings are incomplete. The nodes settings should contain " \
             "the following parameters: the number of local epochs ('locla_e`pochs': int), optimizer ('optimizer': str), " \
             "batch size ('batch_size': str) and learning rate ('learning rate' : float).")
+        
         if self.enable_archiver:
             try:
-                self.archiver_settings = self.orchestrator_settings['archiver_settings']
+                self.archiver_settings = self.orchestrator_settings['archiver']
             except KeyError:
                 raise SettingsObjectException('The archiver is enabled in the settings, but the init method was unable to '\
                                               'retrieve the archiver settings. Provide relevant settings packed as dictionary ' \
                                               "or disable the archiver using option <'enable_archiver': False>.")
+        
+        if self.enable_optimizer:
+            try:
+                self.optimizer_settings = self.orchestrator_settings['optimizer']
+            except KeyError:
+                raise SettingsObjectException('The optimizer is enabled in the settings, but the init method was unable to '\
+                                              'retrieve the archiver settings. Provide relevant settings packed as dictionary ' \
+                                              "or disable the archiver using option <'enable_optimizer': False>.")

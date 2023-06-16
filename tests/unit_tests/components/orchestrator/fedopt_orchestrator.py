@@ -1,11 +1,11 @@
-from asociita.components.orchestrator.generic_orchestrator import Orchestrator
+from asociita.components.orchestrator.fedopt_orchestrator import Fedopt_Orchestrator
 from asociita.components.settings.settings import Settings
 from asociita.datasets.fetch_data import load_data
 from asociita.models.pytorch.mnist import MNIST_CNN
 import unittest
 import os
 
-class GenOrchestratorInitCase(unittest.TestCase):
+class FedoptOrchestratorInitCase(unittest.TestCase):
     def setUp(self) -> None:
         self.config = {
             "orchestrator": {
@@ -15,8 +15,13 @@ class GenOrchestratorInitCase(unittest.TestCase):
                 "sample_size": 2,
                 "metrics_save_path": "None",
                 'enable_archiver': False,
-                'enable_optimizer': False,
+                'enable_optimizer': True,
                 'enable_evaluator': False,
+                "optimizer": {
+                    "name": "FedAdagard",
+                    "learning_rate": 0.03162277660168379,
+                    "b1": 0.3,
+                    "tau": 0.01}
             },
             "nodes":{
             "local_epochs": 2,
@@ -47,7 +52,7 @@ class GenOrchestratorInitCase(unittest.TestCase):
         self.model = MNIST_CNN()
         
     def testInit(self) -> None:
-        self.gen_orch = Orchestrator(self.settings)
+        self.gen_orch = Fedopt_Orchestrator(self.settings)
     
     def testPreparationPhase(self) -> None:
         self.gen_orch.prepare_orchestrator(
@@ -58,8 +63,8 @@ class GenOrchestratorInitCase(unittest.TestCase):
         signal = self.gen_orch.train_protocol(nodes_data=self.nodes_data)
         self.assertEqual(signal, 0)
 
-def unit_test_genorchestrator():
-    case = GenOrchestratorInitCase()
+def unit_test_fedoptorchestrator():
+    case = FedoptOrchestratorInitCase()
     case.setUp()
     case.testInit()
     case.testPreparationPhase()
@@ -67,7 +72,7 @@ def unit_test_genorchestrator():
     print("All unit test for Generic Object Orchestrator were passed")
 
 
-class GenOrchestratorInitCase_Warchiver(unittest.TestCase):
+class FedoptOrchestratorInitCase_Warchiver(unittest.TestCase):
     def setUp(self) -> None:
         self.config = {
         "orchestrator": {
@@ -76,7 +81,7 @@ class GenOrchestratorInitCase_Warchiver(unittest.TestCase):
             "local_warm_start": False,
             "sample_size": 2,
             'enable_archiver': True,
-            'enable_optimizer': False,
+            'enable_optimizer': True,
             "enable_evaluator": False,
             "archiver":{
                 "orchestrator": True,
@@ -91,7 +96,12 @@ class GenOrchestratorInitCase_Warchiver(unittest.TestCase):
                 "clients_on_central_filename": "None",
                 "central_on_local_filename": "None",
                 "orchestrator_model_save_path": "None",
-                "nodes_model_save_path": "None"}
+                "nodes_model_save_path": "None"},
+                "optimizer": {
+                    "name": "FedAdagard",
+                    "learning_rate": 0.03162277660168379,
+                    "b1": 0.3,
+                    "tau": 0.01}
         },
         "nodes":{
         "local_epochs": 1,
@@ -127,7 +137,7 @@ class GenOrchestratorInitCase_Warchiver(unittest.TestCase):
         self.model = MNIST_CNN()
         
     def testInit(self) -> None:
-        self.gen_orch = Orchestrator(self.settings)
+        self.gen_orch = Fedopt_Orchestrator(self.settings)
     
     def testPreparationPhase(self) -> None:
         self.gen_orch.prepare_orchestrator(
@@ -138,8 +148,8 @@ class GenOrchestratorInitCase_Warchiver(unittest.TestCase):
         signal = self.gen_orch.train_protocol(nodes_data=self.nodes_data)
         self.assertEqual(signal, 0)
 
-def unit_test_genorchestrator_warchiver():
-    case = GenOrchestratorInitCase_Warchiver()
+def unit_test_fedoptorchestrator_warchiver():
+    case = FedoptOrchestratorInitCase_Warchiver()
     case.setUp()
     case.testInit()
     case.testPreparationPhase()

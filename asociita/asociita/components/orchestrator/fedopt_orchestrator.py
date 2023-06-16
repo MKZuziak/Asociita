@@ -52,21 +52,25 @@ class Fedopt_Orchestrator(Orchestrator):
         
         # 1. SETTINGS -> CHANGE IF NEEDED
         # GENERAL SETTINGS
-        iterations = self.settings['iterations'] # Number of iterations of the Fed training, int.
-        nodes_number = self.settings['number_of_nodes'] # Number of nodes prepared for sampling, int.
-        local_warm_start = self.settings["local_warm_start"] # Local warm start for pre-trained models - not implemented yet.
-        nodes = self.settings["nodes"] # List of nodes, list[int]
-        sample_size = self.settings["sample_size"] # Size of the sample, int.
-        # OPTIMIZER SETTINGS
-        optimizer_settings = self.settings["optimizer"] # Dict containing instructions for the optimizer, dict.
+        iterations = self.settings.iterations
+        nodes_number = self.settings.number_of_nodes
+        local_warm_start = self.settings.local_warm_start
+        nodes = [node for node in range(nodes_number)]
+        sample_size = self.settings.sample_size
         
-
-        # 2. SET-UP PHASE -> CHANGE IF NEEDED
-        # SETTING-UP EVALUATION MANAGER
-        archive_manager = Archive_Manager(archive_manager = self.settings['archiver'],
-                                          logger = orchestrator_logger)
+        # ARCHIVER OBJECT
+        if self.settings.enable_archiver == True:
+            archive_manager = Archive_Manager(
+                archive_manager = self.settings.archiver_settings,
+                logger = orchestrator_logger)
+        
+        # OPTIMIZER OBJECT
+        optimizer_settings = self.settings.optimizer_settings # Dict containing instructions for the optimizer, dict.
+        Optim = Optimizers(weights = self.central_model.get_weights(),
+                           settings=optimizer_settings)
+        
         # CREATING FEDERATED NODES
-        nodes_green = create_nodes(nodes, self.node_settings)
+        nodes_green = create_nodes(nodes, self.settings.nodes_settings)
         # CREATING LOCAL MODELS (that will be loaded onto nodes)
         model_list = self.model_initialization(nodes_number=nodes_number,
                                                model=self.central_net)
@@ -75,10 +79,6 @@ class Fedopt_Orchestrator(Orchestrator):
                                                 model_list=model_list,
                                                 data_list=nodes_data,
                                                 nodes_number=nodes_number)
-        # SETTING UP THE OPTIMIZER
-        Optim = Optimizers(weights = self.central_model.get_weights(),
-                           settings=optimizer_settings)
-
 
         # 3. TRAINING PHASE ----- FEDOPT
         with Manager() as manager:
@@ -108,9 +108,11 @@ class Fedopt_Orchestrator(Orchestrator):
                     for node in nodes_green:
                         node.model.update_weights(updated_weights)
                     # Upadting the orchestrator                 
-                    archive_manager.archive_training_results(iteration = iteration,
-                                                             central_model=self.central_model,
-                                                             nodes=nodes_green)
+                    if self.settings.enable_archiver == True:
+                        archive_manager.archive_training_results(iteration = iteration,
+                                                                central_model=self.central_model,
+                                                                nodes=nodes_green)
         # 4. FINALIZING PHASE
         # EVALUATING THE RESULTS
         orchestrator_logger.critical("Training complete")
+        return 0
