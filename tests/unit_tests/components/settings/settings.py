@@ -10,6 +10,7 @@ class SettingsInitTestCase(unittest.TestCase):
                 "local_warm_start": False,
                 "sample_size": 2,
                 "metrics_save_path": "None",
+                'enable_archiver': True,
                 "nodes": [
                 0,
                 1,
@@ -47,5 +48,4 @@ def unit_test_settings():
     case.testInit()
     case.testPropertyRetrive()
     print("All unit tests for Setting Object Initialization has been passed.")
-
-unit_test_settings()
+    return 0
