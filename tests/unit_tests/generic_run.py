@@ -7,6 +7,7 @@ def test_suite():
     test_settings = unit_test_settings()
     # Test 2: Generic Orchestrator Class Object Initialization
     test_genorch = unit_test_genorchestrator()
+    print("The simulation of generic orchestrator training and managing nodes was passed successfully.")
 
 if __name__ == "__main__":
     test_suite()

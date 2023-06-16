@@ -193,9 +193,10 @@ class Orchestrator():
                     # Upadting the orchestrator
                     self.central_model.update_weights(avg)
 
-                    archive_manager.archive_training_results(iteration = iteration,
-                                                             central_model=self.central_model,
-                                                             nodes=nodes_green)
+                    if self.settings.enable_archiver == True:
+                        archive_manager.archive_training_results(iteration = iteration,
+                                                                central_model=self.central_model,
+                                                                nodes=nodes_green)
 
         orchestrator_logger.critical("Training complete")
         return 0

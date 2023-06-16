@@ -6,7 +6,7 @@ import os
 class Archive_Manager():
     def __init__(self,
                  archive_manager: dict,
-                 logger) -> None:
+                 logger = None) -> None:
         try:
             # Modes
             self.orchestrator_metrics = archive_manager["orchestrator"]
@@ -32,9 +32,12 @@ class Archive_Manager():
             self.nodes_save_path = archive_manager["nodes_model_save_path"]
 
         except ArchiverSettingsException:
-            raise ArchiverSettingsException
+            raise ArchiverSettingsException('The dictionary passed to the Archiver does not contain all the necessary key-words '/
+                                            "The Dictionary should contain following key-items pairs: {orchestrator: bool," /
+                                            "clients_on_central: bool, central_on_local: bool, save_results: bool, log_results: bool}")
         
-        self.logger = logger
+        if logger != None:
+            self.logger = logger
     
     def archive_training_results(self,
                         iteration: int,
