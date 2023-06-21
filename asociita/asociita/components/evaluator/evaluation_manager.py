@@ -263,20 +263,20 @@ class Evaluation_Manager():
                                                         previous_model = self.previous_c_model,
                                                         return_coalitions = self.full_debug)
 
-        # Preserving debug values (if enabled)
-        if self.full_debug:
-            if iteration == 0:
-                with open(os.path.join(self.full_debug_path, 'col_values_debug.csv'), 'a+', newline='') as csv_file:
-                    field_names = ['coalition', 'value', 'iteration']
-                    csv_writer = csv.writer(csv_file)
-                    csv_writer.writerow(field_names)
-                    for col, value in debug_values.items():
-                        csv_writer.writerow([col, value, iteration])
-            else:
-                with open(os.path.join(self.full_debug_path, 'col_values_debug.csv'), 'a+', newline='') as csv_file:
-                    csv_writer = csv.writer(csv_file)
-                    for col, value in debug_values.items():
-                        csv_writer.writerow([col, value, iteration])
+                # Preserving debug values (if enabled)
+                if self.full_debug:
+                    if iteration == 0:
+                        with open(os.path.join(self.full_debug_path, 'col_values_debug.csv'), 'a+', newline='') as csv_file:
+                            field_names = ['coalition', 'value', 'iteration']
+                            csv_writer = csv.writer(csv_file)
+                            csv_writer.writerow(field_names)
+                            for col, value in debug_values.items():
+                                csv_writer.writerow([col, value, iteration])
+                    else:
+                        with open(os.path.join(self.full_debug_path, 'col_values_debug.csv'), 'a+', newline='') as csv_file:
+                            csv_writer = csv.writer(csv_file)
+                            for col, value in debug_values.items():
+                                csv_writer.writerow([col, value, iteration])
 
     def finalize_tracking(self,
                           path: str = None):
