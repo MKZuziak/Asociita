@@ -131,7 +131,7 @@ class OR_Evaluator():
                 else:
                     print(f"{operation_counter} of {number_of_operations}: forming and evaluating subset {subset_without_i}")
                     model_without_i = self.shapley_or_recon[subset_without_i]
-                    score_without_i = model_without_i.evaluate_model()[1]
+                    score_without_i = model_without_i.quick_evaluate()[1]
                     self.recorded_values[subset_without_i] = score_without_i
                     print(f"Coalition of {subset_without_i} scored {self.recorded_values[subset_without_i]}")
                     operation_counter += 1
@@ -141,7 +141,7 @@ class OR_Evaluator():
                 else:
                     print(f"{operation_counter} of {number_of_operations}: forming and evaluating subset {subset_with_i}")
                     model_with_i = self.shapley_or_recon[subset_with_i]
-                    score_with_i = model_with_i.evaluate_model()[1]
+                    score_with_i = model_with_i.quick_evaluate()[1]
                     self.recorded_values[subset_with_i] = score_with_i
                     print(f"Coalition of {subset_with_i} scored {self.recorded_values[subset_with_i]}")
                     operation_counter += 1

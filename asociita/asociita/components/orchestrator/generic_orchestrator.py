@@ -1,54 +1,76 @@
-import datasets, copy
-from typing import Any, Union
+import datasets 
+import copy
+from typing import Union
 from asociita.components.nodes.federated_node import FederatedNode
 from asociita.models.pytorch.federated_model import FederatedModel
 from asociita.utils.computations import Aggregators
-from asociita.utils.handlers import Handler
 from asociita.utils.loggers import Loggers
-from asociita.utils.orchestrations import prepare_nodes, create_nodes, check_health, sample_nodes, train_nodes
+from asociita.utils.orchestrations import create_nodes, check_health, sample_nodes, train_nodes
 from asociita.components.archiver.archive_manager import Archive_Manager
 from asociita.components.settings.settings import Settings
 from multiprocessing import Pool, Manager
 from torch import nn
 
-
+# set_start_method set to 'spawn' to ensure compatibility across platforms.
 orchestrator_logger = Loggers.orchestrator_logger()
 from multiprocessing import set_start_method
 set_start_method("spawn", force=True)
 
+
 class Orchestrator():
-    def __init__(self, 
-                 settings: Settings) -> None:
-        """Orchestrator is a central object necessary for performing the simulation.
+    """Orchestrator is a central object necessary for performing the simulation.
         It connects the nodes, maintain the knowledge about their state and manages the
         multithread pool. generic_orchestrator.orchestrator is a parent to all more
-        specific orchestrators.
+        specific orchestrators."""
+    
+    
+    def __init__(self, 
+                 settings: Settings,
+                 **kwargs) -> None:
+        """Orchestrator is initialized by passing an instance
+        of the Settings object. Settings object contains all the relevant configurational
+        settings that an instance of the Orchestrator object may need to complete the simulation.
         
-        -------------
-        Args
-            settings (settings): Settings object cotaining all the settings of the orchestrator.
-       -------------
-         Returns
-            None"""
+        Parameters
+        ----------
+        settings : Settings
+            An instance of thesettings object cotaining all the settings 
+            of the orchestrator.
+        **kwargs : dict, optional
+            Extra arguments to enable selected features of the Orchestrator.
+            passing full_debug to **kwargs, allow to enter a full debug mode.
+       
+       Returns
+       -------
+       None
+        """
         self.settings = settings
         self.model = None
+        # Special option to enter a full debug mode.
+        if kwargs:
+            if kwargs.get("full_debug"):
+                self.full_debug = True
+            else:
+                self.full_debug = False
     
     
     def prepare_orchestrator(self, 
-                             model: Any,
+                             model: nn,
                              validation_data: datasets.arrow_dataset.Dataset,
                              ) -> None:
-        """Loads the global model and validation data that will be used by the Orchestrator.
+        """Loads the orchestrator's test data and creates an instance
+        of the Federated Model object that will be used throughout the training.
         
-        -------------
-        Args
-        validation_data (datasets.arrow_dataset.Dataset): 
+        Parameters
+        ----------
+        validation_data : datasets.arrow_dataset.Dataset:
             Validation dataset that will be used by the Orchestrator.
-        model (Any): Compiled or pre-compiled model that will 
-            be used by the instance of the class.
-        -------------
+        model : torch.nn
+            Model architecture that will be used throughout the training.
+        
         Returns
-            None"""
+        -------
+        None"""
         self.validation_data = [validation_data]
         self.central_net = model
         self.central_model = FederatedModel(settings = self.settings.model_settings,
@@ -67,19 +89,27 @@ class Orchestrator():
         is set to True, the method call should be passed a list of models which
         length is equall to the number of nodes.
         
-        -------------
-        Args:
-            nodes_number (int): number of nodes that will participate in the
-                training.
-            model (Union[nn.Module, list]): a neural net schematic (if warm
-                start is set to False) or a number of different neural net schematics
-                (if warm start is set to True) that will prepared for the nodes to be
-                loaded as FederatedModels.
-            local_warm_start (bool): A boolean value for switching on/off the warm start
-                utility.
-        -------------
-        Returns:
-            tuple(node_id: str, weights)
+        Parameters
+        ----------
+        nodes_number: int 
+            number of nodes that will participate in the training.
+        model: Union[nn.Module, list[nn.Module]] 
+            a neural net schematic (if warm start is set to False) or 
+            a number of different neural net schematics
+            (if warm start is set to True) that 
+            are prepared for the nodes to be loaded as FederatedModels.
+        local_warm_start: bool, default False
+            boolean value for switching on/off the warm start utility.
+        
+        Returns
+        -------
+        list[nn.Module]
+            returns a list containing an instances of torch.nn.Module class.
+        
+        Raises
+        ------
+        NotImplemenetedError
+            If local_warm_start is set to True.
         """
         if local_warm_start == True:
             raise NotImplementedError("Local warm start is not implemented yet.")
@@ -92,25 +122,27 @@ class Orchestrator():
                              nodes_list: list[FederatedNode],
                              model_list: list[nn.Module],
                              data_list: list[datasets.arrow_dataset.Dataset, 
-                                    datasets.arrow_dataset.Dataset],
-                             nodes_number: int) -> list[FederatedNode]:
+                                    datasets.arrow_dataset.Dataset]
+                                    ) -> list[FederatedNode]:
         """Prepare instances of a FederatedNode object for a participation in 
-        the Federated Training.  Contrary to the  create nodes function, 
+        the Federated Training.  Contrary to the 'create nodes' function, 
         it accepts only already initialized instances of the FederatedNode
         object.
         
-        -------------
-        Args:
-            nodess_list (list[FederatedNode]): list containing all the initialized
-                FederatedNode instances.
-            model_list (list[nn.Module]): list containing all the initialized 
-                nn.Module objects. Note that conversion from nn.Module into the
-                FederatedModel will occur at the local node level.
-            data_list (list[..., ....]): list containing train set and test set
+        Parameters
+        ----------
+            nodess_list: list[FederatedNode] 
+                The list containing all the initialized FederatedNode instances.
+            model_list: list[nn.Module] 
+                The list containing all the initialized nn.Module objects. 
+                Note that conversion from nn.Module into the FederatedModel will occur 
+                at the local node level.
+            data_list (list[..., ....]): 
+                The list containing train set and test set 
                 wrapped in a hugging facr arrow_dataset.Dataset containers.
-            nodes_number (int): Number of nodes that will participate in the training.
-        -------------
-        Returns:
+        
+        Raises
+        ------
             list[FederatedNode]"""
         
         results = []
@@ -132,42 +164,46 @@ class Orchestrator():
         settings. The train_protocol of the generic_orchestrator.Orchestrator
         follows a classic FedAvg algorithm - it averages the local weights
         and aggregates them taking a weighted average.
-        SOURCE: Communication-Efficient Learning of Deep Networks from Decentralized Data, H.B. McMahan et al.
+        SOURCE: Communication-Efficient Learning of
+        Deep Networks from Decentralized Data, H.B. McMahan et al.
 
-        -------------
-        Args:
-            nodes_data(list[..., ....]): list containing train set and test set
-                wrapped in a hugging facr arrow_dataset.Dataset containers.
+        Parameters
+        ----------
+        nodes_data: list[datasets.arrow_dataset.Dataset, datasets.arrow_dataset.Dataset] 
+            A list containing train set and test set
+            wrapped in a hugging face arrow_dataset.Dataset containers.
         -------------
         Returns:
-            None"""
+        Int
+            Returns 0 on the successful completion of the training."""
         
-        # SETTINGS -> CHANGE IF NEEDED
+        # Initializing all the attributes using an instance of the Settings object.
         iterations = self.settings.iterations
         nodes_number = self.settings.number_of_nodes
         local_warm_start = self.settings.local_warm_start
         nodes = [node for node in range(nodes_number)]
         sample_size = self.settings.sample_size
+        
+        # Initializing an instance of the Archiver class if enabled in the settings.
         if self.settings.enable_archiver == True:
             archive_manager = Archive_Manager(
                 archive_manager = self.settings.archiver_settings,
                 logger = orchestrator_logger)
 
-        # CREATING FEDERATED NODES
+        # Creating (empty) federated nodes.
         nodes_green = create_nodes(nodes, 
                                    self.settings.nodes_settings)
 
 
-        # CREATING LOCAL MODELS (that will be loaded onto nodes)
+        # Creating a list of models for the nodes.
         model_list = self.model_initialization(nodes_number=nodes_number,
                                                model=self.central_net)
         
-        # INITIALIZING ALL THE NODES
+        # Initializing nodes -> loading the data and models onto empty nodes.
         nodes_green = self.nodes_initialization(nodes_list=nodes_green,
                                                 model_list=model_list,
-                                                data_list=nodes_data,
-                                                nodes_number=nodes_number)
-            
+                                                data_list=nodes_data)
+        
         # TRAINING PHASE ----- FEDAVG
         with Manager() as manager:
             queue = manager.Queue() # creates a shared queue
@@ -193,10 +229,12 @@ class Orchestrator():
                     # Upadting the orchestrator
                     self.central_model.update_weights(avg)
 
+                    # Passing results to the archiver -> only if so enabled in the settings.
                     if self.settings.enable_archiver == True:
                         archive_manager.archive_training_results(iteration = iteration,
                                                                 central_model=self.central_model,
                                                                 nodes=nodes_green)
+
 
         orchestrator_logger.critical("Training complete")
         return 0

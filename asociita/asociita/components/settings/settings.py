@@ -39,7 +39,7 @@ class Settings():
             self.batch_size = self.nodes_settings['model_settings']['batch_size']
             self.lr = self.nodes_settings['model_settings']['learning_rate']
         except KeyError:
-            raise SettingsObjectException("The provided orchestrator settings are incomplete. The nodes settings should contain " \
+            raise SettingsObjectException("The provided nodes settings are incomplete. The nodes settings should contain " \
             "the following parameters: the number of local epochs ('locla_e`pochs': int), optimizer ('optimizer': str), " \
             "batch size ('batch_size': str) and learning rate ('learning rate' : float).")
         
@@ -58,3 +58,11 @@ class Settings():
                 raise SettingsObjectException('The optimizer is enabled in the settings, but the init method was unable to '\
                                               'retrieve the archiver settings. Provide relevant settings packed as dictionary ' \
                                               "or disable the archiver using option <'enable_optimizer': False>.")
+        
+        if self.enable_evaluator:
+            try:
+                self.evaluator_settings = self.orchestrator_settings['evaluator']
+            except KeyError:
+                raise SettingsObjectException('The evaluator is enabled in the settings, but the init method was unable to '\
+                                              'retrieve the evaluator settings. Provide relevant settings packed as dictionary ' \
+                                              "or disable the evaluator using option <'evaluator_enable': False>.")

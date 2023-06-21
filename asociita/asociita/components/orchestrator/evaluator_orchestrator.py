@@ -1,36 +1,49 @@
-# PARENT CLASS IMPORT
-from asociita.components.orchestrator.generic_orchestrator import Orchestrator # Parent class import
-# LIBRARY MODULES IMPORT
+from asociita.components.orchestrator.generic_orchestrator import Orchestrator
 from asociita.utils.orchestrations import create_nodes, sample_nodes, train_nodes
 from asociita.utils.computations import Aggregators
-from asociita.utils.handlers import Handler
 from asociita.utils.loggers import Loggers
 from asociita.utils.orchestrations import create_nodes, sample_nodes, train_nodes
 from asociita.utils.optimizers import Optimizers
 from asociita.components.evaluator.evaluation_manager import Evaluation_Manager
 from asociita.components.archiver.archive_manager import Archive_Manager
-# ADDITIONAL IMPORTS
-import datasets, copy
+from asociita.components.settings.settings import Settings
+import datasets
+import copy
 from multiprocessing import Pool, Manager
 
 
 orchestrator_logger = Loggers.orchestrator_logger()
+from multiprocessing import set_start_method
+set_start_method("spawn", force=True)
 
 
 class Evaluator_Orchestrator(Orchestrator):
-    def __init__(self, settings: dict) -> None:
-        """Orchestrator is a central object necessary for performing the simulation.
+    """Orchestrator is a central object necessary for performing the simulation.
         It connects the nodes, maintain the knowledge about their state and manages the
-        multithread pool. generic_orchestrator.orchestrator is a parent to all more
-        specific orchestrators. Evaluator_Orchestrator additionally performs a 
-        evaluation of the clients contribution, according to the passed settings.
+        multithread pool. Evaluator orchestrator is a child class of the Generic Orchestrator.
+        Unlike its parent, Evaluator performs a training using Federated Optimization
+        - pseudo-gradients from the models and momentum. Additionally, Evaluator Orchestrator
+        is able to assess clients marginal contribution with the help of Evaluation Manager."""
+    
+    
+    def __init__(self, settings: Settings) -> None:
+        """Orchestrator is initialized by passing an instance
+        of the Settings object. Settings object contains all the relevant configurational
+        settings that an instance of the Orchestrator object may need to complete the simulation.
+        Evaluator Orchestrator additionaly requires a configurations passed to the Optimizer 
+        and Evaluator Manager upon its initialization.
         
-        -------------
-        Args
-            settings (dict): dictionary object cotaining all the settings of the orchestrator.
-       -------------
-         Returns
-            None"""
+        Parameters
+        ----------
+        settings: Settings 
+            An instance of the Settings object cotaining all the settings of the orchestrator.
+            The Evaluator Orchestrator additionaly requires the passed object to contain a 
+            configuration for the Optimizer and the Evaluation Manager.
+       
+       Returns
+       -------
+       None
+        """
         super().__init__(settings)
     
 
@@ -38,64 +51,74 @@ class Evaluator_Orchestrator(Orchestrator):
                 nodes_data: list[datasets.arrow_dataset.Dataset, 
                 datasets.arrow_dataset.Dataset]) -> None:
         """"Performs a full federated training according to the initialized
-        settings. The train_protocol of the fedopt.orchestrator.Fedopt_Orchestrator
+        settings. The train_protocol of the orchestrator.evaluator_orchestrator
         follows a popular FedAvg generalisation, FedOpt. Instead of weights from each
         clients, it aggregates gradients (understood as a difference between the weights
         of a model after all t epochs of the local training) and aggregates according to 
-        provided rule.
-        SOURCE: Adaptive Federated Optimization, S.J. Reddi et al.
+        provided rule. The evaluation process is menaged by the instance of the Evaluation
+        Manager object, which is called upon each iteration.
 
-        -------------
-        Args:
-            nodes_data(list[..., ....]): list containing train set and test set
-                wrapped in a hugging facr arrow_dataset.Dataset containers.
-        -------------
-        Returns:
-            None"""
+        Parameters
+        ----------
+        nodes_data: list[datasets.arrow_dataset.Dataset, datasets.arrow_dataset.Dataset]: 
+            A list containing train set and test set wrapped 
+            in a hugging face arrow_dataset.Dataset containers
         
-        # 1. SETTINGS -> CHANGE IF NEEDED
-        # GENERAL SETTINGS
-        iterations = self.settings['iterations'] # Number of iterations of the Fed training, int.
-        nodes_number = self.settings['number_of_nodes'] # Number of nodes prepared for sampling, int.
-        local_warm_start = self.settings["local_warm_start"] # Local warm start for pre-trained models - not implemented yet.
-        nodes = self.settings["nodes"] # List of nodes, list[int]
-        sample_size = self.settings["sample_size"] # Size of the sample, int.
-        # OPTIMIZER SETTINGS
-        optimizer_settings = self.settings["optimizer"] # Dict containing instructions for the optimizer, dict.
+        Returns
+        -------
+        int
+            Returns 0 on the successful completion of the training.
+            """
         
-
-        # 2. SET-UP PHASE -> CHANGE IF NEEDED
-        # SETTING-UP EVALUATION MANAGER
-        evaluation_manager = Evaluation_Manager(settings = self.settings,
+        # Initializing all the attributes using an instance of the Settings object.
+        iterations = self.settings.iterations
+        nodes_number = self.settings.number_of_nodes
+        local_warm_start = self.settings.local_warm_start
+        nodes = [node for node in range(nodes_number)]
+        sample_size = self.settings.sample_size
+        
+        # Initializing an instance of the Archiver class if enabled in the settings.
+        if self.settings.enable_archiver == True:
+            archive_manager = Archive_Manager(
+                archive_manager = self.settings.archiver_settings,
+                logger = orchestrator_logger)
+        
+        # Initializing an instance of the Optimizer class object.
+        optimizer_settings = self.settings.optimizer_settings # Dict containing instructions for the optimizer, dict.
+        Optim = Optimizers(weights = self.central_model.get_weights(),
+                           settings=optimizer_settings)
+        
+        # Initializing the Evaluation Manager
+        evaluation_manager = Evaluation_Manager(settings = self.settings.evaluator_settings,
                                                 model = self.central_model,
                                                 nodes = nodes,
                                                 iterations = iterations)
-        archive_manager = Archive_Manager(archive_manager = self.settings['archiver'],
-                                          logger = orchestrator_logger)
-        # CREATING FEDERATED NODES
-        nodes_green = create_nodes(nodes, self.node_settings)
-        # CREATING LOCAL MODELS (that will be loaded onto nodes)
+        
+        # Creating (empty) federated nodes.
+        nodes_green = create_nodes(nodes, 
+                                   self.settings.nodes_settings)
+         # Creating a list of models for the nodes.
         model_list = self.model_initialization(nodes_number=nodes_number,
                                                model=self.central_net)
-        # INITIALIZING ALL THE NODES
+        # Initializing nodes -> loading the data and models onto empty nodes.
         nodes_green = self.nodes_initialization(nodes_list=nodes_green,
                                                 model_list=model_list,
-                                                data_list=nodes_data,
-                                                nodes_number=nodes_number)
-        # SETTING UP THE OPTIMIZER
-        Optim = Optimizers(weights = self.central_model.get_weights(),
-                           settings=optimizer_settings)
+                                                data_list=nodes_data)
 
 
         # 3. TRAINING PHASE ----- FEDOPT
         with Manager() as manager:
+            queue = manager.Queue() # creates a shared queue
             # create the pool of workers
             with Pool(sample_size) as pool:
                 for iteration in range(iterations):
                     orchestrator_logger.info(f"Iteration {iteration}")
                     gradients = {}
-                    evaluation_manager.preserve_previous_model(previous_model = self.central_model) # Preserving last central model
-                    evaluation_manager.preserve_previous_optimizer(previous_optimizer = Optim) # Preserving last optimizer settings (together with momentum)
+
+                    # Evaluation step: preserving the last version of the model and optimizer
+                    evaluation_manager.preserve_previous_model(previous_model = self.central_model)
+                    evaluation_manager.preserve_previous_optimizer(previous_optimizer = Optim)
+                    
                     # Sampling nodes and asynchronously apply the function
                     sampled_nodes, sampled_idx = sample_nodes(nodes_green, 
                                                  sample_size=sample_size,
@@ -106,28 +129,32 @@ class Evaluator_Orchestrator(Orchestrator):
                     for result in results:
                         node_id, model_gradients = result.get()
                         gradients[node_id] = copy.deepcopy(model_gradients)
-                    
                     # Computing the average of gradients
                     grad_avg = Aggregators.compute_average(gradients) # AGGREGATING FUNCTION -> CHANGE IF NEEDED
+                    # Upadting the weights using gradients and momentum
                     updated_weights = Optim.fed_optimize(weights=self.central_model.get_weights(),
                                                          delta=grad_avg)
-                    self.central_model.update_weights(updated_weights) # Updating the central model
+                    # Updating the central model
+                    self.central_model.update_weights(updated_weights)
+                    # Evaluation step: preserving the updated central model
                     evaluation_manager.preserve_updated_model(updated_model = self.central_model)
 
-                    # TRACKING GRADIENTS FOR EVALUATION
+                    # Evaluation step: calculating all the marginal contributions
                     evaluation_manager.track_results(gradients = gradients,
                                                      nodes_in_sample = sampled_nodes,
-                                                     iteration = iteration) # TRACKING FUNCTION -> CHANGE IF NEEDED
+                                                     iteration = iteration)
                     
-                    ### WEIGHTS UPDATE
                     # Updating the nodes
                     for node in nodes_green:
                         node.model.update_weights(updated_weights)
-                    # Upadting the orchestrator                 
-                    archive_manager.archive_training_results(iteration = iteration,
-                                                             central_model=self.central_model,
-                                                             nodes=nodes_green)
-        # 4. FINALIZING PHASE
-        # EVALUATING THE RESULTS
+                    
+                    # Passing results to the archiver -> only if so enabled in the settings.               
+                    if self.settings.enable_archiver == True:
+                        archive_manager.archive_training_results(iteration = iteration,
+                                                                central_model=self.central_model,
+                                                                nodes=nodes_green)
+        
+        # Evaluation step: Calling evaluation manager to preserve all steps
         results = evaluation_manager.finalize_tracking(path = archive_manager.metrics_savepath)
         orchestrator_logger.critical("Training complete")
+        return 0

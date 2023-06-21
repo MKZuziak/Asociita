@@ -133,9 +133,9 @@ class Subsets:
             return loo_set
 
 
-    def select_subsets(coalitions: dict,
+    def select_subsets(coalitions: dict | list,
                        searched_node: int) -> dict[tuple : Any]:
-        """Given a list of possible coalitions and a searched node, will return
+        """Given a dict or list of possible coalitions and a searched node, will return
         every possible coalition which DO NOT CONTAIN the searche node.
         -------------
         Args
@@ -145,6 +145,9 @@ class Subsets:
        -------------
          Returns
             dict[tuple : Any]"""
-        subsets = {nodes: model for nodes, model in coalitions.items() 
-                  if searched_node not in nodes}
+        if type(coalitions) == dict:
+            subsets = {nodes: model for nodes, model in coalitions.items() 
+                    if searched_node not in nodes}
+        if type(coalitions) == list:
+            subsets = [nodes for nodes in coalitions if searched_node not in nodes]
         return subsets
