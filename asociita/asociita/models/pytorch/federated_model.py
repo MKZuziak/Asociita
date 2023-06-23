@@ -1,5 +1,5 @@
 # Libraries imports
-import sys, warnings, torch, gc, copy
+import torch, copy
 import numpy as np
 from datasets import arrow_dataset
 from collections import OrderedDict
@@ -54,12 +54,9 @@ class FederatedModel:
         assert net, "Could not find net object, please ensure that a valid nn.Module was passed in a function call."
         assert local_dataset, "Could not find local dataset that should be used with that model. Pleasure ensure that local dataset was passed in a function call."
         
-        self.net = copy.deepcopy(net)
+        self.net = net # No need to create a deep copy
         self.settings = settings
         self.node_name = node_name
-
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.net.to(self.device)
         model_logger.info(f"Node {node_name} will use {self.device} as a device.")
 
         # If both, train and test data were provided
@@ -180,7 +177,7 @@ class FederatedModel:
         -------------
             _type_: weights of the network
         """
-        return copy.deepcopy(self.net.state_dict())
+        return self.net.state_dict() # Try: to provide original weights, no copies.
     
 
     def get_gradients(self):
@@ -193,7 +190,7 @@ class FederatedModel:
         for key in weights_t1:
             self.gradients[key] =  weights_t1[key] - weights_t2[key]
         
-        return copy.deepcopy(self.gradients)
+        return self.gradients # Try: to provide original weights, no copies
 
 
     def update_weights(self, avg_tensors) -> None:
@@ -258,7 +255,10 @@ class FederatedModel:
         running_loss = 0.0
         total_correct = 0
         total = 0
-        #self.net = self.net.to(self.device)
+        
+        # Try: to place a net on the device during the training stage
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.net.to(self.device)
 
         self.net.train()
         for _, dic in enumerate(self.trainloader):
@@ -270,6 +270,7 @@ class FederatedModel:
             if isinstance(data, list):
                 data = data[0]
             
+            # Placing the data on the device
             data, target = data.to(self.device), target.to(self.device)
             # forward pass, backward pass and optimization
             outputs = self.net(data)
@@ -288,6 +289,7 @@ class FederatedModel:
             self.optimizer.zero_grad()
             self.net.zero_grad()
         
+            # Emptying the cuda_cache
             if torch.cuda.is_available():
                 torch.cuda.empty_cache()
 
@@ -308,6 +310,10 @@ class FederatedModel:
         -------
             Tuple[float, float]: loss and accuracy on the test set.
         """
+        # Try: to place net on device directly during the evaluation stage.
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.net.to(self.device)
+        
         with torch.no_grad():
             if self.net:
                 self.net.eval()
@@ -369,15 +375,19 @@ class FederatedModel:
                 denominator = [sum(x) for x in zip(true_positives, false_negatives)]
                 true_positive_rate = [num/den for num, den in zip(true_positives, denominator)]
 
-                return (
-                    test_loss,
-                    accuracy,
-                    f1score,
-                    precision,
-                    recall,
-                    accuracy_per_class,
-                    true_positive_rate,
-                    false_positive_rate
+                # Emptying the cuda_cache
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+
+        return (
+                test_loss,
+                accuracy,
+                f1score,
+                precision,
+                recall,
+                accuracy_per_class,
+                true_positive_rate,
+                false_positive_rate
                 )
 
     def quick_evaluate(self) -> tuple[float, float]:
@@ -390,6 +400,10 @@ class FederatedModel:
             -------
                 Tuple[float, float]: loss and accuracy on the test set.
             """
+        # Try: to place net on device directly during the evaluation stage.
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.net.to(self.device)
+        
         with torch.no_grad():
             if self.net:
                 self.net.eval()
@@ -411,11 +425,15 @@ class FederatedModel:
                         correct += pred.eq(target.view_as(pred)).sum().item()
                     test_loss = np.mean(losses)
                     accuracy = correct / total
+                
+                # Emptying the cuda_cache
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
 
-                    return (
-                        test_loss,
-                        accuracy
-                    )
+        return (
+            test_loss,
+            accuracy
+            )
 
 
     def transform_func(self,

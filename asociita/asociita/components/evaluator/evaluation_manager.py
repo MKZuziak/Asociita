@@ -9,10 +9,6 @@ import copy
 import os
 import csv
 
-def write_metrics_dict(file: dict,
-                       path: str):
-    pass
-
 
 class Evaluation_Manager():
     """Evaluation Manager encapsulates the whole process of assessing the marginal

@@ -1,7 +1,5 @@
 from collections import OrderedDict
-import numpy as np
 from torch import zeros
-from typing import Union
 import torch
 
 
@@ -9,12 +7,16 @@ class Optimizers():
     def __init__(self,
                  weights: OrderedDict,
                  settings: dict) -> None:
+        # Seting up a device for the Optimizer. Please note, that the device must be the same as this
+        # that the nets were placed on. Otherwise, PyTorch will raise an exception trying to combine
+        # data placec on CPU and GPU.
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.previous_delta = OrderedDict((key, zeros(weights[key].size(), device=self.device)) for key in weights.keys())
         self.previous_momentum = OrderedDict((key, zeros(weights[key].size(), device=self.device)) for key in weights.keys())
         self.optimizer = settings['name']
         self.learning_rate = torch.tensor(settings['learning_rate'])
 
+        # Selecting a proper centralised optimizer and placing all the tensors on the same device.
         if self.optimizer == 'Simple':
             self.learning_rate = self.learning_rate.to(self.device)
         elif self.optimizer == "FedAdagard":

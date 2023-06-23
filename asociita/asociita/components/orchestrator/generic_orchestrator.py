@@ -8,8 +8,10 @@ from asociita.utils.loggers import Loggers
 from asociita.utils.orchestrations import create_nodes, check_health, sample_nodes, train_nodes
 from asociita.components.archiver.archive_manager import Archive_Manager
 from asociita.components.settings.settings import Settings
-from multiprocessing import Pool, Manager
+from multiprocessing import Pool
 from torch import nn
+from asociita.utils.debugger import log_gpu_memory
+from asociita.utils.helpers import Helpers
 
 # set_start_method set to 'spawn' to ensure compatibility across platforms.
 orchestrator_logger = Loggers.orchestrator_logger()
@@ -34,7 +36,7 @@ class Orchestrator():
         Parameters
         ----------
         settings : Settings
-            An instance of thesettings object cotaining all the settings 
+            An instance of the settings object cotaining all the settings 
             of the orchestrator.
         **kwargs : dict, optional
             Extra arguments to enable selected features of the Orchestrator.
@@ -52,6 +54,11 @@ class Orchestrator():
                 self.full_debug = True
             else:
                 self.full_debug = False
+        if kwargs.get("batch_job"):
+            self.batch_job = True
+            self.batch = kwargs["batch"]
+        else:
+            self.batch_job = False
     
     
     def prepare_orchestrator(self, 
@@ -114,6 +121,7 @@ class Orchestrator():
         if local_warm_start == True:
             raise NotImplementedError("Local warm start is not implemented yet.")
         else:
+            # Deep copy is nec. because the models will have different (non-shared) parameters
             model_list = [copy.deepcopy(model) for _ in range(nodes_number)]
         return model_list
 
@@ -180,7 +188,7 @@ class Orchestrator():
         # Initializing all the attributes using an instance of the Settings object.
         iterations = self.settings.iterations
         nodes_number = self.settings.number_of_nodes
-        local_warm_start = self.settings.local_warm_start
+        local_warm_start = self.settings.local_warm_start # Note: not implemeneted yet.
         nodes = [node for node in range(nodes_number)]
         sample_size = self.settings.sample_size
         
@@ -197,45 +205,53 @@ class Orchestrator():
 
         # Creating a list of models for the nodes.
         model_list = self.model_initialization(nodes_number=nodes_number,
-                                               model=self.central_net)
+                                               model=self.central_net) # return deep copies of nets.
         
         # Initializing nodes -> loading the data and models onto empty nodes.
         nodes_green = self.nodes_initialization(nodes_list=nodes_green,
                                                 model_list=model_list,
-                                                data_list=nodes_data)
-        
-        # TRAINING PHASE ----- FEDAVG
-        with Manager() as manager:
-            queue = manager.Queue() # creates a shared queue
-            # create the pool of workers
-            with Pool(sample_size) as pool: 
-                for iteration in range(iterations):
-                    orchestrator_logger.info(f"Iteration {iteration}")
-                    weights = {}
-                    # Sampling nodes and asynchronously apply the function
-                    sampled_nodes = sample_nodes(nodes_green, 
-                                                 sample_size=sample_size, 
-                                                 orchestrator_logger=orchestrator_logger) # SAMPLING FUNCTION -> CHANGE IF NEEDED
+                                                data_list=nodes_data) # no deep copies of nets created at this stage
+    
+    # TRAINING PHASE ----- FEDAVG
+        # create the pool of workers
+        for iteration in range(iterations):
+            orchestrator_logger.info(f"Iteration {iteration}")
+            weights = {}
+            # Sampling nodes and asynchronously apply the function
+            sampled_nodes = sample_nodes(nodes_green, 
+                                            sample_size=sample_size, 
+                                            orchestrator_logger=orchestrator_logger) # SAMPLING FUNCTION -> CHANGE IF NEEDED
+            if self.batch_job:
+                for batch in Helpers.chunker(sampled_nodes, size=self.batch):
+                    with Pool(sample_size) as pool:
+                        results = [pool.apply_async(train_nodes, (node,)) for node in batch]
+                        # consume the results
+                        for result in results:
+                            node_id, model_weights = result.get()
+                            weights[node_id] = copy.deepcopy(model_weights)
+            else:
+                with Pool(sample_size) as pool:
                     results = [pool.apply_async(train_nodes, (node,)) for node in sampled_nodes]
                     # consume the results
                     for result in results:
                         node_id, model_weights = result.get()
                         weights[node_id] = copy.deepcopy(model_weights)
-                    # Computing the average
-                    avg = Aggregators.compute_average(weights) # AGGREGATING FUNCTION -> CHANGE IF NEEDED
-                    # Updating the nodes
-                    for node in nodes_green:
-                        node.model.update_weights(avg)
-                    # Upadting the orchestrator
-                    self.central_model.update_weights(avg)
+            # Computing the average
+            avg = Aggregators.compute_average(weights) # AGGREGATING FUNCTION -> CHANGE IF NEEDED
+            # Updating the nodes
+            for node in nodes_green:
+                node.model.update_weights(avg)
+            # Upadting the orchestrator
+            self.central_model.update_weights(avg)
 
-                    # Passing results to the archiver -> only if so enabled in the settings.
-                    if self.settings.enable_archiver == True:
-                        archive_manager.archive_training_results(iteration = iteration,
-                                                                central_model=self.central_model,
-                                                                nodes=nodes_green)
-
+            # Passing results to the archiver -> only if so enabled in the settings.
+            if self.settings.enable_archiver == True:
+                archive_manager.archive_training_results(iteration = iteration,
+                                                        central_model=self.central_model,
+                                                        nodes=nodes_green)
+            if self.full_debug == True:
+                log_gpu_memory(iteration=iteration)
 
         orchestrator_logger.critical("Training complete")
         return 0
-                    
+                        

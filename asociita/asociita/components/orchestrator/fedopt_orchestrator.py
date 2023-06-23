@@ -71,7 +71,7 @@ class Fedopt_Orchestrator(Orchestrator):
         # Initializing all the attributes using an instance of the Settings object.
         iterations = self.settings.iterations
         nodes_number = self.settings.number_of_nodes
-        local_warm_start = self.settings.local_warm_start
+        local_warm_start = self.settings.local_warm_start # Note: not implemented yet.
         nodes = [node for node in range(nodes_number)]
         sample_size = self.settings.sample_size
         
