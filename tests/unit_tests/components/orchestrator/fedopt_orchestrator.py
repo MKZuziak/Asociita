@@ -9,10 +9,10 @@ class FedoptOrchestratorInitCase(unittest.TestCase):
     def setUp(self) -> None:
         self.config = {
             "orchestrator": {
-                "iterations": 2,
-                "number_of_nodes": 5,
+                "iterations": 2000,
+                "number_of_nodes": 30,
                 "local_warm_start": False,
-                "sample_size": 2,
+                "sample_size": 10,
                 "metrics_save_path": "None",
                 'enable_archiver': False,
                 'enable_optimizer': True,
@@ -24,24 +24,24 @@ class FedoptOrchestratorInitCase(unittest.TestCase):
                     "tau": 0.01}
             },
             "nodes":{
-            "local_epochs": 2,
+            "local_epochs": 4,
             "model_settings": {
                 "optimizer": "RMS",
-                "batch_size": 64,
+                "batch_size": 32,
                 "learning_rate": 0.0031622776601683794}
                 }
         }
         self.data_config = {
             "dataset_name" : "mnist",
             "split_type" : "heterogeneous_size",
-            "shards": 10,
+            "shards": 30,
             "local_test_size": 0.2,
             "transformations": {},
             "imbalanced_clients": {},
             "save_dataset": False,
             "save_transformations": False,
             "save_blueprint": False,
-            "agents": 10}
+            "agents": 30}
         self.settings = Settings(initialization_method='dict',
                                  dict_settings = self.config)
         self.data = load_data(self.data_config)
@@ -52,7 +52,7 @@ class FedoptOrchestratorInitCase(unittest.TestCase):
         self.model = MNIST_CNN()
         
     def testInit(self) -> None:
-        self.gen_orch = Fedopt_Orchestrator(self.settings)
+        self.gen_orch = Fedopt_Orchestrator(self.settings, full_debug = True, batch_job = False, batch=15)
     
     def testPreparationPhase(self) -> None:
         self.gen_orch.prepare_orchestrator(
@@ -155,3 +155,6 @@ def unit_test_fedoptorchestrator_warchiver():
     case.testPreparationPhase()
     case.testTrainingPhase()
     print("All unit test for Generic Object Orchestrator with supporting archiver were passed")
+
+if __name__ == "__main__":
+    unit_test_fedoptorchestrator()

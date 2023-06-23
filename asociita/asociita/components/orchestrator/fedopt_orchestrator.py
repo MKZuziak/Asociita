@@ -6,9 +6,10 @@ from asociita.utils.loggers import Loggers
 from asociita.utils.orchestrations import create_nodes, sample_nodes, train_nodes
 from asociita.utils.optimizers import Optimizers
 from asociita.components.archiver.archive_manager import Archive_Manager
-from multiprocessing import Pool, Manager
+from multiprocessing import Pool
 from asociita.components.settings.settings import Settings
-from torch import nn
+from asociita.utils.helpers import Helpers
+from asociita.utils.debugger import log_gpu_memory
 
 # set_start_method set to 'spawn' to ensure compatibility across platforms.
 orchestrator_logger = Loggers.orchestrator_logger()
@@ -25,7 +26,8 @@ class Fedopt_Orchestrator(Orchestrator):
     
 
     def __init__(self, 
-                 settings: Settings) -> None:
+                 settings: Settings,
+                 **kwargs) -> None:
         """Orchestrator is initialized by passing an instance
         of the Settings object. Settings object contains all the relevant configurational
         settings that an instance of the Orchestrator object may need to complete the simulation.
@@ -43,7 +45,7 @@ class Fedopt_Orchestrator(Orchestrator):
        -------
        None
        """
-        super().__init__(settings)
+        super().__init__(settings, kwargs=kwargs)
     
 
     def train_protocol(self,
@@ -99,39 +101,48 @@ class Fedopt_Orchestrator(Orchestrator):
                                                 data_list=nodes_data)
 
         # 3. TRAINING PHASE ----- FEDOPT
-        with Manager() as manager:
-            queue = manager.Queue() # creates a shared queue
-            # create the pool of workers
-            with Pool(sample_size) as pool:
-                for iteration in range(iterations):
-                    orchestrator_logger.info(f"Iteration {iteration}")
-                    gradients = {}
-                    # Sampling nodes and asynchronously apply the function
-                    sampled_nodes = sample_nodes(nodes_green, 
-                                                 sample_size=sample_size,
-                                                 orchestrator_logger=orchestrator_logger,
-                                                 return_aux=False) # SAMPLING FUNCTION -> CHANGE IF NEEDED
+        # create the pool of workers
+        for iteration in range(iterations):
+            orchestrator_logger.info(f"Iteration {iteration}")
+            gradients = {}
+            # Sampling nodes and asynchronously apply the function
+            sampled_nodes = sample_nodes(nodes_green, 
+                                         sample_size=sample_size, 
+                                         orchestrator_logger=orchestrator_logger) # SAMPLING FUNCTION -> CHANGE IF NEEDED
+            if self.batch_job:
+                for batch in Helpers.chunker(sampled_nodes, size=self.batch):
+                    with Pool(sample_size) as pool:
+                        results = [pool.apply_async(train_nodes, (node, 'gradients')) for node in batch]
+                        # consume the results
+                        for result in results:
+                            node_id, model_weights = result.get()
+                            gradients[node_id] = copy.deepcopy(model_weights)
+            else:
+                with Pool(sample_size) as pool:
                     results = [pool.apply_async(train_nodes, (node, 'gradients')) for node in sampled_nodes]
                     # consume the results
                     for result in results:
                         node_id, model_gradients = result.get()
                         gradients[node_id] = copy.deepcopy(model_gradients)
-                    # Computing the average of gradients
-                    grad_avg = Aggregators.compute_average(gradients) # AGGREGATING FUNCTION -> CHANGE IF NEEDED
-                    # Upadting the weights using gradients and momentum
-                    updated_weights = Optim.fed_optimize(weights=self.central_model.get_weights(),
-                                                         delta=grad_avg)
-                    # Updating the orchestrator
-                    self.central_model.update_weights(updated_weights)
-                    # Updating the nodes
-                    for node in nodes_green:
-                        node.model.update_weights(updated_weights)         
+            # Computing the average
+            grad_avg = Aggregators.compute_average(gradients) # AGGREGATING FUNCTION -> CHANGE IF NEEDED
+            # Upadting the weights using gradients and momentum
+            updated_weights = Optim.fed_optimize(weights=self.central_model.get_weights(),
+                                                    delta=grad_avg)
+            # Updating the orchestrator
+            self.central_model.update_weights(updated_weights)
+            # Updating the nodes
+            for node in nodes_green:
+                node.model.update_weights(updated_weights)         
                    
-                    # Passing results to the archiver -> only if so enabled in the settings.
-                    if self.settings.enable_archiver == True:
-                        archive_manager.archive_training_results(iteration = iteration,
-                                                                central_model=self.central_model,
-                                                                nodes=nodes_green)
+            # Passing results to the archiver -> only if so enabled in the settings.
+            if self.settings.enable_archiver == True:
+                archive_manager.archive_training_results(iteration = iteration,
+                                                        central_model=self.central_model,
+                                                        nodes=nodes_green)
+            
+            if self.full_debug == True:
+                log_gpu_memory(iteration=iteration)
 
         orchestrator_logger.critical("Training complete")
         return 0

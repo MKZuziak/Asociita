@@ -96,7 +96,7 @@ class Optimizers():
             current_momentum[row_key] = self.previous_momentum[row_key] + (current_delta[row_key] ** 2)
 
         for row_key in updated_weights.keys():
-            updated_weights[row_key] = weights[row_key] + (learning_rate * (current_delta[row_key] / (torch.sqrt(current_momentum[row_key]) + tau)))
+            updated_weights[row_key] = (weights[row_key].to(self.device)) + (learning_rate * (current_delta[row_key] / (torch.sqrt(current_momentum[row_key]) + tau)))
         
         self.previous_delta = current_delta
         self.previous_momentum = current_momentum

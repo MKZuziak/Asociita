@@ -49,11 +49,10 @@ class Orchestrator():
         self.settings = settings
         self.model = None
         # Special option to enter a full debug mode.
-        if kwargs:
-            if kwargs.get("full_debug"):
-                self.full_debug = True
-            else:
-                self.full_debug = False
+        if kwargs.get("full_debug"):
+            self.full_debug = True
+        else:
+            self.full_debug = False
         if kwargs.get("batch_job"):
             self.batch_job = True
             self.batch = kwargs["batch"]
@@ -228,14 +227,14 @@ class Orchestrator():
                         # consume the results
                         for result in results:
                             node_id, model_weights = result.get()
-                            weights[node_id] = copy.deepcopy(model_weights)
+                            weights[node_id] = model_weights
             else:
                 with Pool(sample_size) as pool:
                     results = [pool.apply_async(train_nodes, (node,)) for node in sampled_nodes]
                     # consume the results
                     for result in results:
                         node_id, model_weights = result.get()
-                        weights[node_id] = copy.deepcopy(model_weights)
+                        weights[node_id] = model_weights
             # Computing the average
             avg = Aggregators.compute_average(weights) # AGGREGATING FUNCTION -> CHANGE IF NEEDED
             # Updating the nodes
