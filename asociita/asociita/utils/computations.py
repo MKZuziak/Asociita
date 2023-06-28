@@ -8,7 +8,7 @@ class Aggregators:
     """Defines the Aggregators class."""
 
     @staticmethod
-    def compute_average(shared_data: dict) -> dict[Any, Any]:
+    def compute_average(gradients: dict) -> dict[Any, Any]:
         """This function computes the average of the weights.
         Args:
             shared_data (Dict): weights received from the other nodes of the cluster
@@ -16,23 +16,16 @@ class Aggregators:
         -------
             OrderedDict: the average of the weights
         """
-        models = list(shared_data.values())
-        results: OrderedDict = OrderedDict()
-
-        for model in models:
-            for key in model:
+        results = OrderedDict()
+        for params in gradients.values():
+            for key in params:
                 if results.get(key) is None:
-                    if torch.cuda.is_available():
-                        model[key] = model[key].to("cuda:0")
-
-                    results[key] = model[key]
+                    results[key] = params[key]
                 else:
-                    if torch.cuda.is_available():
-                        model[key] = model[key].to("cuda:0")
-                    results[key] = results[key].add(model[key])
+                    results[key] += params[key]
 
         for key in results:
-            results[key] = torch.div(results[key], len(models))
+            results[key] = torch.div(results[key], len(gradients))
         return results
     
 

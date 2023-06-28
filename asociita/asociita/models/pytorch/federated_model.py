@@ -184,6 +184,7 @@ class FederatedModel:
         
         assert self.initial_model != None, "Computing gradients require saving initial model first!"
         self.net.to(self.cpu) # Dupming weights on cpu.
+        self.initial_model.to(self.cpu)
         weights_t1 = self.net.state_dict()
         weights_t2 = self.initial_model.state_dict()
         

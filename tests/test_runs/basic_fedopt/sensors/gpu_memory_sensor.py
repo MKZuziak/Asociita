@@ -38,3 +38,5 @@ if __name__ == '__main__':
                 writer = csv.writer(csv_file)
                 writer.writerow([time_string, i, mem_used])
         time.sleep(2)
+
+        

@@ -10,7 +10,7 @@ class Optimizers():
         # Seting up a device for the Optimizer. Please note, that the device must be the same as this
         # that the nets were placed on. Otherwise, PyTorch will raise an exception trying to combine
         # data placec on CPU and GPU.
-        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.device = torch.device("cpu")
         self.previous_delta = OrderedDict((key, zeros(weights[key].size(), device=self.device)) for key in weights.keys())
         self.previous_momentum = OrderedDict((key, zeros(weights[key].size(), device=self.device)) for key in weights.keys())
         self.optimizer = settings['name']
