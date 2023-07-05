@@ -7,6 +7,7 @@ from asociita.utils.optimizers import Optimizers
 from asociita.components.evaluator.evaluation_manager import Evaluation_Manager
 from asociita.components.archiver.archive_manager import Archive_Manager
 from asociita.components.settings.settings import Settings
+from asociita.utils.helpers import Helpers
 import datasets
 import copy
 from multiprocessing import Pool, Manager
@@ -104,6 +105,60 @@ class Evaluator_Orchestrator(Orchestrator):
         nodes_green = self.nodes_initialization(nodes_list=nodes_green,
                                                 model_list=model_list,
                                                 data_list=nodes_data)
+
+        for iteration in range(iterations):
+            orchestrator_logger.info(f"Iteration {iteration}")
+            gradients = {}
+            # Evaluation step: preserving the last version of the model and optimizer
+            evaluation_manager.preserve_previous_model(previous_model = self.central_model)
+            evaluation_manager.preserve_previous_optimizer(previous_optimizer = Optim)
+            # Sampling nodes and asynchronously apply the function
+            sampled_nodes = sample_nodes(nodes_green, 
+                                         sample_size=sample_size, 
+                                         orchestrator_logger=orchestrator_logger) # SAMPLING FUNCTION -> CHANGE IF NEEDED
+            if self.batch_job:
+                for batch in Helpers.chunker(sampled_nodes, size=self.batch):
+                    with Pool(sample_size) as pool:
+                        results = [pool.apply_async(train_nodes, (node, 'gradients')) for node in batch]
+                        # consume the results
+                        for result in results:
+                            node_id, model_weights = result.get()
+                            gradients[node_id] = copy.deepcopy(model_weights)
+            else:
+                with Pool(sample_size) as pool:
+                    results = [pool.apply_async(train_nodes, (node, 'gradients')) for node in sampled_nodes]
+                    # consume the results
+                    for result in results:
+                        node_id, model_gradients = result.get()
+                        gradients[node_id] = copy.deepcopy(model_gradients)
+            
+            # Computing the average
+            grad_avg = Aggregators.compute_average(gradients) # AGGREGATING FUNCTION -> CHANGE IF NEEDED
+            # Upadting the weights using gradients and momentum
+            updated_weights = Optim.fed_optimize(weights=self.central_model.get_weights(),
+                                                    delta=grad_avg)
+            # Evaluation step: preserving the updated central model
+            evaluation_manager.preserve_updated_model(updated_model = self.central_model)
+
+            # Evaluation step: calculating all the marginal contributions
+            evaluation_manager.track_results(gradients = gradients,
+                                             nodes_in_sample = sampled_nodes,
+                                             iteration = iteration)
+            
+            # Updating the orchestrator
+            self.central_model.update_weights(updated_weights)
+            # Updating the nodes
+            for node in nodes_green:
+                node.model.update_weights(updated_weights)         
+                   
+            # Passing results to the archiver -> only if so enabled in the settings.
+            if self.settings.enable_archiver == True:
+                archive_manager.archive_training_results(iteration = iteration,
+                                                        central_model=self.central_model,
+                                                        nodes=nodes_green)
+            
+            if self.full_debug == True:
+                log_gpu_memory(iteration=iteration)
 
 
         # 3. TRAINING PHASE ----- FEDOPT

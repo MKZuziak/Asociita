@@ -9,6 +9,7 @@ from collections import OrderedDict
 from _collections_abc import Generator
 from asociita.utils.optimizers import Optimizers
 
+
 def chunker(seq: iter, size: int) -> Generator:
     """Helper function for splitting an iterable into a number
     of chunks each of size n. If the iterable can not be splitted
@@ -27,6 +28,7 @@ def chunker(seq: iter, size: int) -> Generator:
         A generator object that can be iterated to obtain chunks of the original iterable.
     """
     return (seq[pos:pos + size] for pos in range(0, len(seq), size))
+
 
 def select_gradients(gradients: OrderedDict,
                      query: list,
@@ -48,9 +50,9 @@ def select_gradients(gradients: OrderedDict,
         A generator object that can be iterated to obtain chunks of the original iterable.
     """
     q_gradients = {}
-    if in_place == False:
-        gradients_copy = copy.deepcopy(gradients) #TODO: Inspect whether making copt is realy necc.
-    for id, grad in gradients_copy.items():
+    # if in_place == False:
+    #     gradients_copy = copy.deepcopy(gradients) #TODO: Inspect whether making copy is realy necc.
+    for id, grad in gradients.items():
         if id in query:
             q_gradients[id] = grad
     return q_gradients
@@ -132,7 +134,7 @@ class Sample_Evaluator():
             marginal_model = copy.deepcopy(previous_model)
             marginal_grad_avg = Aggregators.compute_average(marginal_gradients) # AGGREGATING FUNCTION -> CHANGE IF NEEDED
             marginal_weights = marginal_optim.fed_optimize(weights=marginal_model.get_weights(),
-                                                         delta=marginal_grad_avg)
+                                                           delta=marginal_grad_avg)
             marginal_model.update_weights(marginal_weights)
             marginal_model_score = marginal_model.evaluate_model()[1]
             self.partial_psi[iteration][node_id] = final_model_score - marginal_model_score
@@ -281,13 +283,13 @@ class Sample_Shapley_Evaluator():
         
 
     def update_shap_multip(self,
-                    gradients,
-                    nodes_in_sample,
-                    optimizer,
-                    iteration: int,
-                    previous_model,
-                    number_of_workers: int = 30,
-                    return_coalitions: bool = True):
+                           gradients: OrderedDict,
+                           nodes_in_sample: list,
+                           optimizer: Optimizers,
+                           iteration: int,
+                           previous_model: FederatedModel,
+                           number_of_workers: int = 30,
+                           return_coalitions: bool = True):
         """Method used to track_results after each training round.
         Update_shap_multip is a default method used to calculate
         Shapley round, as it uses a number of workers to complete a task.
@@ -327,19 +329,18 @@ class Sample_Shapley_Evaluator():
         number_of_operations = 2 ** (len(nodes_in_sample)) - 1
         if len(superset) < number_of_workers:
             number_of_workers = len(superset)
+        chunked = chunker(seq = superset, size = number_of_workers)
         with Pool(number_of_workers) as pool:
-            chunked = chunker(seq = superset, size = number_of_workers)
             for chunk in chunked:
                 results = [pool.apply_async(self.establish_value, (coalition, 
-                                                                   copy.deepcopy(gradients),
-                                                                   copy.deepcopy(optimizer),
-                                                                   copy.deepcopy(previous_model))) for coalition in chunk]
+                                                                    copy.deepcopy(gradients),
+                                                                    copy.deepcopy(optimizer),
+                                                                    copy.deepcopy(previous_model))) for coalition in chunk]
                 for result in results:
                     coalition, score = result.get()
                     coalition_results[tuple(sorted(coalition))] = score
                 operation_counter += len(chunk)
                 print(f"Completed {operation_counter} out of {number_of_operations} operations")
-        
         print("Finished evaluating all of the coalitions. Commencing calculation of individual Shapley values.")
         for node in nodes_in_sample:
             shap = 0.0
