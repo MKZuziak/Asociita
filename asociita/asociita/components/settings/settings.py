@@ -1,4 +1,6 @@
 from asociita.exceptions.settingexception import SettingsObjectException
+import os
+import time
 
 class Settings():
     def __init__(self,
@@ -25,13 +27,14 @@ class Settings():
         if initialization_method == 'dict':
             self.init_from_dict(dict_settings=dict_settings)
             if self.enable_archiver:
-                self.init_archiver_from_dict(dict_settings=dict_settings)
+                self.init_archiver_from_dict(dict_settings=self.orchestrator_settings)
         elif initialization_method == 'kwargs':
             self.init_from_dict(kwargs)
         else:
             raise SettingsObjectException('Initialization method is not supported. '\
                                           'Supported methods: dict, kwargs')
     
+
     def init_from_dict(self,
                        dict_settings : dict):
         """Initialization of an instance of the Settings object. If the self.allow_default 
@@ -134,10 +137,9 @@ class Settings():
         
         # MODEL SETTINGS INITIALIZATION
         try:
-            self.nodes_settings['model_settings']
+            self.nodes_settings['model_settings'] = dict_settings['nodes']['model_settings']
         except KeyError:
             if self.allow_defualt:
-                self.model_settings = self.generate_default_model()
                 self.nodes_settings['model_settings'] = self.model_settings # Appedig model settings to nodes_settings
             else:
                 raise SettingsObjectException("The provided nodes settings are incomplete. The nodes settings should contain " \
@@ -177,9 +179,166 @@ class Settings():
                 "the following parameters: the number of local epochs ('locla_e`pochs': int), optimizer ('optimizer': str), " \
                 "batch size ('batch_size': str) and learning rate ('learning rate' : float).")
         
+        self.model_settings = self.nodes_settings['model_settings'] # Model settings functions also as an indepndent attribute.
         self.print_orchestrator_template()
         self.print_nodes_template()
+    
+
+    def init_archiver_from_dict(self,
+                                dict_settings: dict):
+        """Initialization of an instance of the Settings object. If the self.allow_default 
+        flag was set to True during instance creation, a default archiver tempalte will be created.
+        ----------
+        dict_settings: dict, default to None
+            A dictionary containing all the relevant settings if the initialization is made from dir. 
+            Default to None
+        Returns
+        -------
+        None"""
+        try:
+            self.archiver_settings = dict_settings['archiver']
+        except KeyError:
+            if self.allow_defualt:
+                self.archiver_settings = self.generate_default_archiver()
+                self.orchestrator_settings['archiver'] = self.archiver_settings # Attachings archiver settings to orchestrator settings.
+            else:
+                raise SettingsObjectException("Archiver was enabled, but the archiver settings are missing and the" \
+                                              "allow_default flag was set to False. Please provide archiver settings or"\
+                                                "set the allow_default flag to True or disable the archiver.")
         
+        # Sanity check of the archiver's settings.
+        try:
+            self.archiver_settings['orchestrator']
+        except KeyError:
+            if self.allow_defualt:
+                self.archiver_settings['orchestrator'] = True
+                print("WARNING! The evaluation of orchestrator was set to True by default.")
+            else:
+                raise SettingsObjectException("Archiver object is missing the key properties!")
+        
+        try:
+            self.archiver_settings['clients_on_central']
+        except KeyError:
+            if self.allow_defualt:
+                self.archiver_settings['clients_on_central'] = True
+                print("WARNING! The evaluation of clients on orchestrator test set was set to False by default.")
+            else:
+                raise SettingsObjectException("Archiver object is missing the key properties!")
+        
+        try:
+            self.archiver_settings['central_on_local']
+        except KeyError:
+            if self.allow_defualt:
+                self.archiver_settings['central_on_local'] = False
+                print("WARNING! The evaluation of the central model on local tests sets test set was set to False by default.")
+            else:
+                raise SettingsObjectException("Archiver object is missing the key properties!")
+        
+        try:
+            self.archiver_settings['log_results']
+        except KeyError:
+            if self.allow_defualt:
+                self.archiver_settings['los_results'] = True
+                print("WARNING! Passing metrics to the logger was set to True by default.")
+            else:
+                raise SettingsObjectException("Archiver object is missing the key properties!")
+        
+        try:
+            self.archiver_settings['save_results']
+        except KeyError:
+            if self.allow_defualt:
+                self.archiver_settings['save_results'] = True
+                print("WARNING! Saving metrics was set to True by default")
+            else:
+                raise SettingsObjectException("Archiver object is missing the key properties!")
+        
+        try:
+            self.archiver_settings['save_orchestrator_model']
+        except KeyError:
+            if self.allow_defualt:
+                self.archiver_settings['save_orchestrator_model'] = False
+                print("WARNING! Saving the orchestrator model was set to False by default")
+            else:
+                raise SettingsObjectException("Archiver object is missing the key properties!")
+        
+        try:
+            self.archiver_settings['save_nodes_model']
+        except KeyError:
+            if self.allow_defualt:
+                self.archiver_settings['save_nodes_model'] = False
+                print("WARNING! Saving the nodes model was set to False by default")
+            else:
+                raise SettingsObjectException("Archiver object is missing the key properties!")
+        
+        if self.archiver_settings['save_results'] == True:
+            try:
+                self.archiver_settings['metrics_savepath']
+            except KeyError:
+                if self.allow_defualt:
+                    self.archiver_settings['metrics_savepath'] = os.getcwd()
+                    print("WARNING! Saving the training results was set to the current working directory by default")
+                else:
+                    raise SettingsObjectException("Archiver object is missing the key properties!")
+        
+        if self.archiver_settings['save_orchestrator_model'] == True:
+            try:
+                self.archiver_settings['orchestrator_model_savepath']
+            except KeyError:
+                if self.allow_defualt:
+                    self.archiver_settings['orchestrator_model_savepath'] = os.getcwd()
+                    print("WARNING! Saving the orchestrator model was set to the current working directory by default")
+                else:
+                    raise SettingsObjectException("Archiver object is missing the key properties!")
+
+        if self.archiver_settings['save_nodes_model'] == True:
+            try:
+                self.archiver_settings['nodes_model_savepath']
+            except KeyError:
+                if self.allow_defualt:
+                    self.archiver_settings['nodes_model_savepath'] = os.getcwd()
+                    print("WARNING! Saving the nodes models was set to the current working directory by default")
+                else:
+                    raise SettingsObjectException("Archiver object is missing the key properties!")
+        
+        if self.archiver_settings['orchestrator'] == True:
+            try:
+                self.archiver_settings['orchestrator_filename']
+            except KeyError:
+                if self.allow_defualt:
+                    self.archiver_settings['orchestrator_filename'] = "orchestrator_results.csv"
+                    print("WARNING! Orchestrator's evaluation results will be stored in a file of default name.")
+                else:
+                    raise SettingsObjectException("Archiver object is missing the key properties!")
+
+        if self.archiver_settings['clients_on_central'] == True:
+            try:
+                self.archiver_settings['clients_on_central_filename']
+            except KeyError:
+                if self.allow_defualt:
+                    self.archiver_settings['clients_on_central_filename'] = "clients_on_central_results.csv"
+                    print("WARNING! Clients models' evaluation results will be stored in a file of default name.")
+                else:
+                    raise SettingsObjectException("Archiver object is missing the key properties!")
+        
+        if self.archiver_settings['clients_on_central'] == True:
+            try:
+                self.archiver_settings['central_on_local_filename']
+            except KeyError:
+                if self.allow_defualt:
+                    self.archiver_settings['central_on_local_filename'] = "central_on_local_results.csv"
+                    print("WARNING! Central model's local evaluation results will be stored in a file of default name.")
+                else:
+                    raise SettingsObjectException("Archiver object is missing the key properties!")
+        
+        if self.archiver_settings.get('form_archive'):
+            if self.archiver_settings['form_archive'] == True:
+                self.form_archive(self.archiver_settings)
+            else:
+                pass
+        
+        self.print_archiver_template()
+        
+
     def generate_default_orchestrator(self) -> dict:
         """Generates default orchestrator template.
         ----------
@@ -218,13 +377,71 @@ class Settings():
         Returns
         -------
         dict"""
-        print("WARNING! Generatic a new default node model.") #TODO: Switch for logger
+        print("WARNING! Generatic a new default node template.") #TODO: Switch for logger
         model = dict()
         model['optimizer'] = 'RMS'
         model['batch_size'] = 32
         model['learning_rate'] = 0.001
         return model
-    
+
+    def generate_default_archiver(self) -> dict:
+        """Generates default model template.
+        ----------
+        None
+        Returns
+        -------
+        dict"""
+        print("WARNING! Generatic a new default archiver template.") #TODO: Switch for logger
+        archiver = dict()
+        time_tuple = time.localtime()
+        time_string = time.strftime("%m_%d_%Y__%H_%M_%S", time_tuple)
+        root_name = os.path.join(os.getcwd(), f"archiver_from_{time_string}")
+        os.mkdir(root_name)
+        
+        archiver['root_path'] = root_name
+        archiver['orchestrator'] = True
+        archiver['clients_on_central'] = False
+        archiver['clients_on_local'] = False
+        archiver['log_results'] = True
+        archiver['save_results'] = True
+        archiver['save_orchestrator_model'] = False
+        archiver['save_nodes_model'] = False
+        archiver['metrics_savepath'] = root_name
+        archiver['orchestrator_filename'] = "orchestrator_results.csv"
+
+        archiver['clients_on_central_filename'] = None
+        archiver['central_on_local_filename'] = None
+        archiver['orchestrator_model_savepath'] = None
+        archiver['nodes_model_savepath'] = None
+        return archiver
+
+
+    def form_archive(self,
+                     archiver:dict):
+        if archiver.get('root_path'):
+            root_name = os.path.join(archiver['root_path'])
+        else:
+            root_name = os.getcwd()
+
+        time_tuple = time.localtime()
+        time_string = time.strftime("%m_%d_%Y__%H_%M_%S", time_tuple)
+        root_name = os.path.join(os.getcwd(), f"archiver_from_{time_string}")
+        os.mkdir(root_name)
+        # Directory for storing results
+        results_path = os.path.join(root_name, 'results')
+        os.mkdir(results_path)
+        # Directory for storing models
+        model_path = os.path.join(root_name, 'models')
+        orchestrator_model_path = os.path.join(model_path, 'orchestrator')
+        nodes_model_path = os.path.join(model_path, 'nodes')
+        os.mkdir(model_path)
+        os.mkdir(orchestrator_model_path)
+        os.mkdir(nodes_model_path)
+
+        archiver['orchestrator_model_savepath'] = orchestrator_model_path
+        archiver['nodes_model_savepath'] = nodes_model_path
+        archiver['metrics_savepath'] = results_path
+
 
     def print_orchestrator_template(self,
                                     orchestrator_type: str = 'general'):
@@ -255,6 +472,27 @@ class Settings():
         string = f"""local_epochs: {self.local_epochs},
         optimizer: {self.optimizer},
         batch_size: {self.batch_size},
-        learning_rate: 0.001                    
+        learning_rate: {self.lr}                    
         """
         print(string) #TODO: Switch for logger
+    
+
+    def print_archiver_template(self):
+        """Prints out the used template for the archiver.
+        ----------
+        None
+        Returns
+        -------
+        dict"""
+        archiver = self.orchestrator_settings['archiver']
+        string = f"""Evaluate orchestrator: {archiver['orchestrator']},
+        evaluate clients on orchestrator test set: {archiver['clients_on_central']},
+        evaluate central model on local test sets: {archiver['central_on_local']},
+        pass metrics to the logger: {archiver['log_results']},
+        save metrics of the training: {archiver['save_results']},
+        save model of the orchestrator: {archiver["save_orchestrator_model"]},
+        save models of the nodes: {archiver["save_orchestrator_model"]},
+        save models of the nodes: {archiver["save_nodes_model"]},
+        metrics savepath: {archiver["metrics_savepath"]}
+        """
+        print(string)

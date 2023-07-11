@@ -28,8 +28,8 @@ class Archive_Manager():
             self.central_on_local_file = archive_manager["central_on_local_filename"]
 
             # Paths for preserving models
-            self.orchestrator_save_path = archive_manager["orchestrator_model_save_path"]
-            self.nodes_save_path = archive_manager["nodes_model_save_path"]
+            self.orchestrator_save_path = archive_manager["orchestrator_model_savepath"]
+            self.nodes_save_path = archive_manager["nodes_model_savepath"]
 
         except ArchiverSettingsException:
             raise ArchiverSettingsException('The dictionary passed to the Archiver does not contain all the necessary key-words '/
