@@ -29,7 +29,10 @@ class Settings():
             if self.enable_archiver:
                 self.init_archiver_from_dict(dict_settings=self.orchestrator_settings)
         elif initialization_method == 'kwargs':
+            # TODO: Not finished yet!
             self.init_from_dict(kwargs)
+            if self.enable_archiver:
+                self.init_archiver_from_dict(dict_settings=kwargs)
         else:
             raise SettingsObjectException('Initialization method is not supported. '\
                                           'Supported methods: dict, kwargs')
@@ -140,7 +143,7 @@ class Settings():
             self.nodes_settings['model_settings'] = dict_settings['nodes']['model_settings']
         except KeyError:
             if self.allow_defualt:
-                self.nodes_settings['model_settings'] = self.model_settings # Appedig model settings to nodes_settings
+                self.nodes_settings['model_settings'] = self.generate_default_model() # Appedig model settings to nodes_settings
             else:
                 raise SettingsObjectException("The provided nodes settings are incomplete. The nodes settings should contain " \
                 "the following parameters: the number of local epochs ('local_epochs': int), optimizer ('optimizer': str), " \
@@ -186,7 +189,7 @@ class Settings():
 
     def init_archiver_from_dict(self,
                                 dict_settings: dict):
-        """Initialization of an instance of the Settings object. If the self.allow_default 
+        """Loads the optimizer configuration onto the settings instance. If the self.allow_default 
         flag was set to True during instance creation, a default archiver tempalte will be created.
         ----------
         dict_settings: dict, default to None
@@ -238,7 +241,7 @@ class Settings():
             self.archiver_settings['log_results']
         except KeyError:
             if self.allow_defualt:
-                self.archiver_settings['los_results'] = True
+                self.archiver_settings['log_results'] = True
                 print("WARNING! Passing metrics to the logger was set to True by default.")
             else:
                 raise SettingsObjectException("Archiver object is missing the key properties!")

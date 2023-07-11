@@ -1,4 +1,4 @@
-from components.settings.settings import unit_test_settings
+from tests.unit_tests.components.settings.settings_test import unit_test_settings
 from components.orchestrator.fedopt_orchestrator import unit_test_fedoptorchestrator
 from components.orchestrator.fedopt_orchestrator import unit_test_fedoptorchestrator_warchiver
 

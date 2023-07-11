@@ -1,4 +1,4 @@
-from components.settings.settings import unit_test_settings
+from tests.unit_tests.components.settings.settings_test import unit_test_settings
 from components.orchestrator.generic_orchestrator import unit_test_genorchestrator
 from components.orchestrator.generic_orchestrator import unit_test_genorchestrator_warchiver
 from dataset.dataset_generation_hetsize import unit_test_hetgen
