@@ -1,5 +1,6 @@
 from asociita.components.settings.settings import Settings
 from asociita.components.settings.fedopt_settings import FedoptSettings
+from asociita.components.settings.evaluator_settings import Evaluator_Settings
 
 def init_settings(orchestrator_type: str,
                   initialization_method: str = 'dict',
@@ -29,6 +30,9 @@ def init_settings(orchestrator_type: str,
                               initialization_method=initialization_method,
                               dict_settings=dict_settings)
     elif orchestrator_type == "evaluator":
-        raise NotImplementedError
+        return Evaluator_Settings(allow_default=allow_default,
+                                 initialization_method=initialization_method,
+                                 dict_settings=dict_settings
+        )
     else:
         raise NameError("The indicated orchestrator type does not exists. Valid orchestrator types are: 'general', 'fed_opt' and 'evaluator'.")

@@ -1,4 +1,4 @@
-from asociita.components.orchestrator.fedopt_orchestrator import Fedopt_Orchestrator
+from asociita.components.orchestrator.evaluator_orchestrator import Evaluator_Orchestrator
 from asociita.datasets.fetch_data import load_data
 from asociita.models.pytorch.mnist import MNIST_CNN
 import os
@@ -27,8 +27,18 @@ def main():
                 "name": "FedAdagard",
                 "learning_rate": 0.1,
                 "b1": 0.1,
-                "tau": 0.1
-            }
+                "tau": 0.1},
+            "evaluator" : {
+            "LOO_OR": False,
+            "Shapley_OR": False,
+            "IN_SAMPLE_LOO": True,
+            "IN_SAMPLE_SHAP": False,
+            "preserve_evaluation": {
+                "preserve_partial_results": True,
+                "preserve_final_results": True
+            },
+            "full_debug": True,
+            "number_of_workers": 50}
         },
         "nodes":{
         "local_epochs": 2,
@@ -48,10 +58,10 @@ def main():
         "save_transformations": False,
         "save_blueprint": False,
         "agents": 10}
-    settings = init_settings(orchestrator_type='fed_opt',
-                                  allow_default=True,
-                                  initialization_method='dict',
-                                  dict_settings=config)
+    settings = init_settings(orchestrator_type='evaluator',
+                             allow_default=True,
+                             initialization_method='dict',
+                             dict_settings=config)
     data = load_data(data_config)
     # DATA: Selecting data for the orchestrator
     orchestrator_data = data[0]
@@ -59,7 +69,7 @@ def main():
     nodes_data = data[1]
     model = MNIST_CNN()
         
-    gen_orch = Fedopt_Orchestrator(settings)
+    gen_orch = Evaluator_Orchestrator(settings)
     
     gen_orch.prepare_orchestrator(
             model=model, 

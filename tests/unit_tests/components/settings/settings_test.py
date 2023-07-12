@@ -1,5 +1,6 @@
 from asociita.components.settings.settings import Settings
 from asociita.components.settings.init_settings import init_settings
+from asociita.components.orchestrator.evaluator_orchestrator import Evaluator_Orchestrator
 import unittest
 import time
 
@@ -251,6 +252,86 @@ class OptimizerFedAdamTestCase(OptimizerSimpleTestCase):
         self.assertEqual(self.settings.orchestrator_settings['optimizer']['b2'], 0.1)
 
 
+class EvaluatorSimpleTestCase(SettingsInitTestCase):
+    def setUp(self) -> None:
+        return super().setUp()
+    
+    def add_config(self) -> None:
+        evaluator = {
+            "LOO_OR": False,
+            "Shapley_OR": False,
+            "IN_SAMPLE_LOO": True,
+            "IN_SAMPLE_SHAP": False,
+            "preserve_evaluation": {
+                "preserve_partial_results": True,
+                "preserve_final_results": True
+            },
+            "full_debug": True,
+            "number_of_workers": 50
+        }
+        self.config['orchestrator']['evaluator'] = evaluator
+    
+    def testInit(self) -> None:
+        self.settings = init_settings(orchestrator_type='evaluator',
+                                      allow_default=True,
+                                      initialization_method='dict',
+                                      dict_settings=self.config)
+    
+    def testPropertyRetrive(self) -> None:
+        super().testPropertyRetrive()
+        self.assertEqual(self.settings.orchestrator_settings['evaluator']['LOO_OR'], False)
+        self.assertEqual(self.settings.orchestrator_settings['evaluator']['Shapley_OR'], False)
+        self.assertEqual(self.settings.orchestrator_settings['evaluator']['IN_SAMPLE_LOO'], True)
+        self.assertEqual(self.settings.orchestrator_settings['evaluator']['preserve_evaluation']['preserve_partial_results'], True)
+        self.assertEqual(self.settings.orchestrator_settings['evaluator']['preserve_evaluation']['preserve_final_results'], True)
+        self.assertEqual(self.settings.orchestrator_settings['evaluator']['full_debug'], True)
+        self.assertEqual(self.settings.orchestrator_settings['evaluator']['number_of_workers'], 50)
+
+
+class EvaluatorDefaultTestCase(SettingsInitTestCase):
+    def setUp(self) -> None:
+        return super().setUp()
+    
+    def testInit(self) -> None:
+        self.settings = init_settings(orchestrator_type='evaluator',
+                                      allow_default=True,
+                                      initialization_method='dict',
+                                      dict_settings=self.config)
+    
+    def testPropertyRetrive(self) -> None:
+        self.assertEqual(self.settings.orchestrator_settings['evaluator']['LOO_OR'], False)
+        self.assertEqual(self.settings.orchestrator_settings['evaluator']['Shapley_OR'], False)
+        self.assertEqual(self.settings.orchestrator_settings['evaluator']['IN_SAMPLE_LOO'], True)
+        self.assertEqual(self.settings.orchestrator_settings['evaluator']['preserve_evaluation']['preserve_partial_results'], True)
+        self.assertEqual(self.settings.orchestrator_settings['evaluator']['preserve_evaluation']['preserve_final_results'], True)
+        self.assertEqual(self.settings.orchestrator_settings['evaluator']['full_debug'], False)
+        self.assertEqual(self.settings.orchestrator_settings['evaluator']['number_of_workers'], 50)
+
+class EvaluatorRepairTestCase(SettingsInitTestCase):
+    def setUp(self) -> None:
+        return super().setUp()
+    
+    def add_config(self) -> None:
+        evaluator = {
+            "number_of_workers": 50
+        }
+        self.config['orchestrator']['evaluator'] = evaluator
+    
+    def testInit(self) -> None:
+        self.settings = init_settings(orchestrator_type='evaluator',
+                                      allow_default=True,
+                                      initialization_method='dict',
+                                      dict_settings=self.config)
+    
+    def testPropertyRetrive(self) -> None:
+        self.assertEqual(self.settings.orchestrator_settings['evaluator']['LOO_OR'], False)
+        self.assertEqual(self.settings.orchestrator_settings['evaluator']['Shapley_OR'], False)
+        self.assertEqual(self.settings.orchestrator_settings['evaluator']['IN_SAMPLE_LOO'], False)
+        self.assertEqual(self.settings.orchestrator_settings['evaluator']['full_debug'], False)
+        self.assertEqual(self.settings.orchestrator_settings['evaluator']['number_of_workers'], 50)
+
+
+
 def unit_test_settings():
     case = SettingsInitTestCase()
     case.setUp()
@@ -311,6 +392,24 @@ def unit_test_settings():
     case11.add_config()
     case11.testInit()
     case11.testPropertyRetrive()
+
+    case12 = EvaluatorSimpleTestCase()
+    case12.setUp()
+    case12.add_config()
+    case12.testInit()
+    case12.testPropertyRetrive()
+
+    case13 = EvaluatorDefaultTestCase() # Without add_config -> test without evaluator
+    case13.setUp() 
+    case13.testInit()
+    case13.testPropertyRetrive()
+
+    case14 = EvaluatorRepairTestCase()
+    case14.setUp()
+    case14.add_config()
+    case14.testInit()
+    case14.testPropertyRetrive()
+
     
     print("All unit tests for Setting Object Initialization has been passed.")
     return 0

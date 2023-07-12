@@ -1,7 +1,5 @@
 from asociita.exceptions.settingexception import SettingsObjectException
 from asociita.components.settings.settings import Settings
-import os
-import time
 
 class FedoptSettings(Settings):
     def __init__(self, 
@@ -38,7 +36,8 @@ class FedoptSettings(Settings):
     def init_optimizer_from_dict(self,
                                  dict_settings: dict):
         """Loads the optimizer configuration onto the settings instance. If the self.allow_default 
-        flag was set to True during instance creation, a default archiver tempalte will be created.
+        flag was set to True during instance creation, a default optimizer tempalte will be created 
+        in asbence of any provided.
         ----------
         dict_settings: dict, default to None
             A dictionary containing all the relevant settings if the initialization is made from dir. 
@@ -53,14 +52,14 @@ class FedoptSettings(Settings):
                 self.optimizer_settings = self.generate_default_optimizer()
             else:
                 raise SettingsObjectException("Optimizer was enabled, but the optimizer settings are missing and the" \
-                                              "allow_default flag was set to False. Please provide archiver settings or"\
-                                                "set the allow_default flag to True or disable the archiver.")
+                                              "allow_default flag was set to False. Please provide optimizer settings or"\
+                                                "set the allow_default flag to True or disable the optimizer.")
 
 
         assert self.optimizer_settings['name'], SettingsObjectException("Optimizer name is missing!")
         # Sanity check for the optimizer
         try:
-            self.optimizer_settings['learning_rate'] = self.optimizer_settings['learning_rate']
+            self.optimizer_settings['learning_rate']
         except KeyError:
             if self.allow_defualt:
                 self.optimizer_settings['learning_rate'] = 1.00
