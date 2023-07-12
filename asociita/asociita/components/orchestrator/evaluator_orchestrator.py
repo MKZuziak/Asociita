@@ -159,55 +159,7 @@ class Evaluator_Orchestrator(Orchestrator):
             
             if self.full_debug == True:
                 log_gpu_memory(iteration=iteration)
-
-
-        # 3. TRAINING PHASE ----- FEDOPT
-        with Manager() as manager:
-            queue = manager.Queue() # creates a shared queue
-            # create the pool of workers
-            with Pool(sample_size) as pool:
-                for iteration in range(iterations):
-                    orchestrator_logger.info(f"Iteration {iteration}")
-                    gradients = {}
-
-                    # Evaluation step: preserving the last version of the model and optimizer
-                    evaluation_manager.preserve_previous_model(previous_model = self.central_model)
-                    evaluation_manager.preserve_previous_optimizer(previous_optimizer = Optim)
-                    
-                    # Sampling nodes and asynchronously apply the function
-                    sampled_nodes, sampled_idx = sample_nodes(nodes_green, 
-                                                 sample_size=sample_size,
-                                                 orchestrator_logger=orchestrator_logger,
-                                                 return_aux=True) # SAMPLING FUNCTION -> CHANGE IF NEEDED
-                    results = [pool.apply_async(train_nodes, (node, 'gradients')) for node in sampled_nodes]
-                    # consume the results
-                    for result in results:
-                        node_id, model_gradients = result.get()
-                        gradients[node_id] = copy.deepcopy(model_gradients)
-                    # Computing the average of gradients
-                    grad_avg = Aggregators.compute_average(gradients) # AGGREGATING FUNCTION -> CHANGE IF NEEDED
-                    # Upadting the weights using gradients and momentum
-                    updated_weights = Optim.fed_optimize(weights=self.central_model.get_weights(),
-                                                         delta=grad_avg)
-                    # Updating the central model
-                    self.central_model.update_weights(updated_weights)
-                    # Evaluation step: preserving the updated central model
-                    evaluation_manager.preserve_updated_model(updated_model = self.central_model)
-
-                    # Evaluation step: calculating all the marginal contributions
-                    evaluation_manager.track_results(gradients = gradients,
-                                                     nodes_in_sample = sampled_nodes,
-                                                     iteration = iteration)
-                    
-                    # Updating the nodes
-                    for node in nodes_green:
-                        node.model.update_weights(updated_weights)
-                    
-                    # Passing results to the archiver -> only if so enabled in the settings.               
-                    if self.settings.enable_archiver == True:
-                        archive_manager.archive_training_results(iteration = iteration,
-                                                                central_model=self.central_model,
-                                                                nodes=nodes_green)
+        
         
         # Evaluation step: Calling evaluation manager to preserve all steps
         results = evaluation_manager.finalize_tracking(path = archive_manager.metrics_savepath)
