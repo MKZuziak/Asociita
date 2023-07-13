@@ -1,7 +1,6 @@
 import logging
 
-Orchestrator_logger = logging.getLogger("")
-
+#Orchestrator_logger = logging.getLogger("")
 
 # create loggers
 class Loggers:
