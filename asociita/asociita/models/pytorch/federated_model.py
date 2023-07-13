@@ -15,7 +15,6 @@ from asociita.exceptions.modelexception import ModelException
 
 from asociita.utils.loggers import Loggers
 
-model_logger = Loggers.model_logger()
 
 class FederatedModel:
     """This class is used to encapsulate the (PyTorch) federated model that
@@ -87,7 +86,8 @@ class FederatedModel:
         else:
             raise ModelException("The provided optimizer name may be incorrect or not implemeneted.\
             Please provide list[train_set, test_set] or list[test_set]")
-
+        
+        self.model_logger = Loggers.model_logger()
 
     def prepare_data(
         self,
@@ -150,9 +150,9 @@ class FederatedModel:
         for _, data in enumerate(trainloader, 0):
             targets.append(data[1])
         targets = [item.item() for sublist in targets for item in sublist]
-        model_logger.info(f"{self.node_name}, {Counter(targets)}")
-        model_logger.info(f"{self.node_name}: Training set size: {num_examples['trainset']}")
-        model_logger.info(f"{self.node_name}: Test set size: {num_examples['testset']}")
+        self.model_logger.info(f"{self.node_name}, {Counter(targets)}")
+        self.model_logger.info(f"{self.node_name}: Training set size: {num_examples['trainset']}")
+        self.model_logger.info(f"{self.node_name}: Test set size: {num_examples['testset']}")
 
 
     def get_weights_list(self) -> list[float]:
@@ -297,7 +297,7 @@ class FederatedModel:
 
         loss = running_loss / len(self.trainloader)
         accuracy = total_correct / total
-        model_logger.info(f"Training on {self.node_name} results: loss: {loss}, accuracy: {accuracy}")
+        self.model_logger.info(f"Training on {self.node_name} results: loss: {loss}, accuracy: {accuracy}")
 
         return loss, accuracy
     

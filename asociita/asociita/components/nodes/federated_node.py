@@ -3,8 +3,6 @@ from datasets import arrow_dataset
 from asociita.models.pytorch.federated_model import FederatedModel
 from asociita.utils.loggers import Loggers
 
-node_logger = Loggers.node_logger()
-
 class FederatedNode:
     def __init__(self, 
                  node_id: int,
@@ -27,6 +25,7 @@ class FederatedNode:
         self.test_data = None
         self.settings = settings
         self.state = 0
+        self.node_logger = Loggers.node_logger()
 
 
     def prepare_node(self, 
@@ -81,7 +80,7 @@ class FederatedNode:
         Returns:
             Tuple[List[float], List[float], List[float]]: _description_
         """
-        node_logger.info(f"Starting training on node {self.node_id}")
+        self.node_logger.info(f"Starting training on node {self.node_id}")
         loss_list: list[float] = []
         accuracy_list: list[float] = []
 
@@ -95,7 +94,7 @@ class FederatedNode:
             loss_list.append(metrics["loss"])
             accuracy_list.append(metrics["accuracy"])
         
-        node_logger.debug(f"Results of training on node {self.node_id}: {accuracy_list}")
+        self.node_logger.debug(f"Results of training on node {self.node_id}: {accuracy_list}")
         if mode == 'weights:':
             return (
                 self.node_id,
@@ -107,7 +106,7 @@ class FederatedNode:
                 self.model.get_gradients()
             )
         else:
-            node_logger.warning("No mode was provided, returning only model's weights")
+            self.node_logger.warning("No mode was provided, returning only model's weights")
             return (
                 self.node_id,
                 self.model.get_weights()

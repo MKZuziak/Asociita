@@ -14,7 +14,6 @@ from asociita.utils.debugger import log_gpu_memory
 from asociita.utils.helpers import Helpers
 
 # set_start_method set to 'spawn' to ensure compatibility across platforms.
-orchestrator_logger = Loggers.orchestrator_logger()
 from multiprocessing import set_start_method
 set_start_method("spawn", force=True)
 
@@ -58,6 +57,8 @@ class Orchestrator():
             self.batch = kwargs["batch"]
         else:
             self.batch_job = False
+        
+        self.orchestrator_logger = Loggers.orchestrator_logger()
     
     
     def prepare_orchestrator(self, 
@@ -159,7 +160,7 @@ class Orchestrator():
         nodes_green = []
         for result in results:
             if check_health(result,
-                            orchestrator_logger=orchestrator_logger):
+                            orchestrator_logger=self.orchestrator_logger):
                 nodes_green.append(result)
         return nodes_green # Returning initialized nodes
 
@@ -195,7 +196,7 @@ class Orchestrator():
         if self.settings.enable_archiver == True:
             archive_manager = Archive_Manager(
                 archive_manager = self.settings.archiver_settings,
-                logger = orchestrator_logger)
+                logger = self.orchestrator_logger)
 
         # Creating (empty) federated nodes.
         nodes_green = create_nodes(nodes, 
@@ -214,12 +215,12 @@ class Orchestrator():
     # TRAINING PHASE ----- FEDAVG
         # create the pool of workers
         for iteration in range(iterations):
-            orchestrator_logger.info(f"Iteration {iteration}")
+            self.orchestrator_logger.info(f"Iteration {iteration}")
             weights = {}
             # Sampling nodes and asynchronously apply the function
             sampled_nodes = sample_nodes(nodes_green, 
                                             sample_size=sample_size, 
-                                            orchestrator_logger=orchestrator_logger) # SAMPLING FUNCTION -> CHANGE IF NEEDED
+                                            orchestrator_logger=self.orchestrator_logger) # SAMPLING FUNCTION -> CHANGE IF NEEDED
             if self.batch_job:
                 for batch in Helpers.chunker(sampled_nodes, size=self.batch):
                     with Pool(sample_size) as pool:
@@ -251,6 +252,6 @@ class Orchestrator():
             if self.full_debug == True:
                 log_gpu_memory(iteration=iteration)
 
-        orchestrator_logger.critical("Training complete")
+        self.orchestrator_logger.critical("Training complete")
         return 0
                         

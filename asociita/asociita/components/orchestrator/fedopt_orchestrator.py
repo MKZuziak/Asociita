@@ -12,7 +12,6 @@ from asociita.utils.helpers import Helpers
 from asociita.utils.debugger import log_gpu_memory
 
 # set_start_method set to 'spawn' to ensure compatibility across platforms.
-orchestrator_logger = Loggers.orchestrator_logger()
 from multiprocessing import set_start_method
 set_start_method("spawn", force=True)
 
@@ -81,7 +80,7 @@ class Fedopt_Orchestrator(Orchestrator):
         if self.settings.enable_archiver == True:
             archive_manager = Archive_Manager(
                 archive_manager = self.settings.archiver_settings,
-                logger = orchestrator_logger)
+                logger = self.orchestrator_logger)
         
         # Initializing an instance of the Optimizer class object.
         optimizer_settings = self.settings.optimizer_settings
@@ -103,12 +102,12 @@ class Fedopt_Orchestrator(Orchestrator):
         # 3. TRAINING PHASE ----- FEDOPT
         # create the pool of workers
         for iteration in range(iterations):
-            orchestrator_logger.info(f"Iteration {iteration}")
+            self.orchestrator_logger.info(f"Iteration {iteration}")
             gradients = {}
             # Sampling nodes and asynchronously apply the function
             sampled_nodes = sample_nodes(nodes_green, 
                                          sample_size=sample_size, 
-                                         orchestrator_logger=orchestrator_logger) # SAMPLING FUNCTION -> CHANGE IF NEEDED
+                                         orchestrator_logger=self.orchestrator_logger) # SAMPLING FUNCTION -> CHANGE IF NEEDED
             if self.batch_job:
                 for batch in Helpers.chunker(sampled_nodes, size=self.batch):
                     with Pool(sample_size) as pool:
@@ -144,5 +143,5 @@ class Fedopt_Orchestrator(Orchestrator):
             if self.full_debug == True:
                 log_gpu_memory(iteration=iteration)
 
-        orchestrator_logger.critical("Training complete")
+        self.orchestrator_logger.critical("Training complete")
         return 0

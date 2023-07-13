@@ -13,7 +13,6 @@ import copy
 from multiprocessing import Pool, Manager
 
 
-orchestrator_logger = Loggers.orchestrator_logger()
 from multiprocessing import set_start_method
 set_start_method("spawn", force=True)
 
@@ -82,7 +81,7 @@ class Evaluator_Orchestrator(Orchestrator):
         if self.settings.enable_archiver == True:
             archive_manager = Archive_Manager(
                 archive_manager = self.settings.archiver_settings,
-                logger = orchestrator_logger)
+                logger = self.orchestrator_logger)
         
         # Initializing an instance of the Optimizer class object.
         optimizer_settings = self.settings.optimizer_settings # Dict containing instructions for the optimizer, dict.
@@ -107,7 +106,7 @@ class Evaluator_Orchestrator(Orchestrator):
                                                 data_list=nodes_data)
 
         for iteration in range(iterations):
-            orchestrator_logger.info(f"Iteration {iteration}")
+            self.orchestrator_logger.info(f"Iteration {iteration}")
             gradients = {}
             # Evaluation step: preserving the last version of the model and optimizer
             evaluation_manager.preserve_previous_model(previous_model = self.central_model)
@@ -115,7 +114,7 @@ class Evaluator_Orchestrator(Orchestrator):
             # Sampling nodes and asynchronously apply the function
             sampled_nodes = sample_nodes(nodes_green, 
                                          sample_size=sample_size, 
-                                         orchestrator_logger=orchestrator_logger) # SAMPLING FUNCTION -> CHANGE IF NEEDED
+                                         orchestrator_logger=self.orchestrator_logger) # SAMPLING FUNCTION -> CHANGE IF NEEDED
             if self.batch_job:
                 for batch in Helpers.chunker(sampled_nodes, size=self.batch):
                     with Pool(sample_size) as pool:
@@ -156,12 +155,9 @@ class Evaluator_Orchestrator(Orchestrator):
                 archive_manager.archive_training_results(iteration = iteration,
                                                         central_model=self.central_model,
                                                         nodes=nodes_green)
-            
-            if self.full_debug == True:
-                log_gpu_memory(iteration=iteration)
         
         
         # Evaluation step: Calling evaluation manager to preserve all steps
         results = evaluation_manager.finalize_tracking(path = archive_manager.metrics_savepath)
-        orchestrator_logger.critical("Training complete")
+        self.orchestrator_logger.critical("Training complete")
         return 0
