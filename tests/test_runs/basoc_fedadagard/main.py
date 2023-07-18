@@ -10,7 +10,7 @@ def main():
         "orchestrator": {
             "iterations": 10,
             "number_of_nodes": 10,
-            "sample_size": 5,
+            "sample_size": 10,
             'enable_archiver': True,
             "archiver":{
                 "root_path": cwd,
@@ -33,6 +33,8 @@ def main():
             "Shapley_OR": False,
             "IN_SAMPLE_LOO": True,
             "IN_SAMPLE_SHAP": False,
+            "LSAA": True,
+            "line_search_length": 20,
             "preserve_evaluation": {
                 "preserve_partial_results": True,
                 "preserve_final_results": True
@@ -48,16 +50,19 @@ def main():
             "learning_rate": 0.001}
     }}
     data_config = {
-        "dataset_name" : "mnist",
-        "split_type" : "homogeneous",
-        "shards": 10,
-        "local_test_size": 0.2,
-        "transformations": {},
-        "imbalanced_clients": {},
-        "save_dataset": False,
-        "save_transformations": False,
-        "save_blueprint": False,
-        "agents": 10}
+    "dataset_name" : "mnist",
+    "split_type" : "homogeneous",
+    "shards": 10,
+    "local_test_size": 0.2,
+    "transformations": {1: {"transformation_type":"noise", "noise_multiplyer": 0.9},
+                        2: {"transformation_type":"noise", "noise_multiplyer": 0.05},
+                        3: {"transformation_type":"perspective_change", "distortion_scale": 0.9, "transformation_probability":0.9},
+                        4: {"transformation_type":"perspective_change", "distortion_scale": 0.1, "transformation_probability":0.1}},
+    "imbalanced_clients": {},
+    "save_dataset": False,
+    "save_transformations": True,
+    "save_blueprint": False,
+    "agents": 10}
     settings = init_settings(orchestrator_type='evaluator',
                              allow_default=True,
                              initialization_method='dict',
@@ -69,7 +74,7 @@ def main():
     nodes_data = data[1]
     model = MNIST_CNN()
         
-    gen_orch = Evaluator_Orchestrator(settings)
+    gen_orch = Evaluator_Orchestrator(settings, full_debug=True)
     
     gen_orch.prepare_orchestrator(
             model=model, 

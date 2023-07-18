@@ -1,4 +1,5 @@
 from asociita.components.evaluator.or_evaluator import OR_Evaluator
+from asociita.components.evaluator.lsaa_evaluator import LSAA
 from asociita.components.evaluator.sample_evaluator import Sample_Evaluator
 from asociita.components.evaluator.sample_evaluator import Sample_Shapley_Evaluator
 from asociita.models.pytorch.federated_model import FederatedModel
@@ -95,6 +96,12 @@ class Evaluation_Manager():
             self.compiled_flags.append('in_sample_shap')
         else:
             self.flag_samplesh_evaluator = False
+        # Flag: LSAA
+        if settings.get("LSAA"):
+            self.flag_lsaa_evaluator = True
+            self.compiled_flags.append('LSAA')
+        else:
+            self.flag_lsaa_evaluator = False
         
         # Sets up a flag for each available method of score preservation
         # Flag: Preservation of partial results (for In-Sample Methods)
@@ -123,7 +130,16 @@ class Evaluation_Manager():
                 self.samplesh_evaluator = Sample_Shapley_Evaluator(nodes = nodes, iterations=iterations)
             except NameError as e:
                 raise Sample_Evaluator_Init_Exception
-        
+        if self.flag_lsaa_evaluator == True:
+            try:
+                self.lsaa_evaluator = LSAA(nodes = nodes, iterations = iterations)
+                self.search_length = settings['line_search_length']
+            except NameError as e:
+                raise #TODO: Custom error
+            except KeyError as k:
+                raise #TODO: Lacking configuration error
+
+
         # Sets up the scheduler
         if settings.get("scheduler"):
             self.scheduler = settings['scheduler']
@@ -234,12 +250,27 @@ class Evaluation_Manager():
         # LOO-InSample Method
         if self.flag_sample_evaluator:
             if iteration in self.scheduler['in_sample_loo']: # Checks scheduler
-                self.sample_evaluator.update_psi(gradients = gradients,
+                debug_values = self.sample_evaluator.update_psi(gradients = gradients,
                                             nodes_in_sample = nodes_in_sample,
                                             iteration = iteration,
                                             optimizer = self.previous_optimizer,
                                             final_model = self.updated_c_model,
                                             previous_model= self.previous_c_model)
+                # Preserving debug values (if enabled)
+                if self.full_debug:
+                    if iteration == 0:
+                        with open(os.path.join(self.full_debug_path, 'col_values_debug_loo.csv'), 'a+', newline='') as csv_file:
+                            field_names = ['coalition', 'value', 'iteration']
+                            csv_writer = csv.writer(csv_file)
+                            csv_writer.writerow(field_names)
+                            for col, value in debug_values.items():
+                                csv_writer.writerow([col, value, iteration])
+                    else:
+                        with open(os.path.join(self.full_debug_path, 'col_values_debug_loo.csv'), 'a+', newline='') as csv_file:
+                            csv_writer = csv.writer(csv_file)
+                            for col, value in debug_values.items():
+                                csv_writer.writerow([col, value, iteration])
+
         # Shapley-InSample Method
         if self.flag_samplesh_evaluator:
             if iteration in self.scheduler['in_sample_shap']: # Checks scheduler
@@ -273,6 +304,33 @@ class Evaluation_Manager():
                             csv_writer = csv.writer(csv_file)
                             for col, value in debug_values.items():
                                 csv_writer.writerow([col, value, iteration])
+    
+        #LSAA Method
+        if self.flag_lsaa_evaluator:
+            if iteration in self.scheduler['LSAA']: # Checks scheduler
+                debug_values = self.lsaa_evaluator.update_lsaa(gradients = gradients,
+                                    nodes_in_sample = nodes_in_sample,
+                                    iteration = iteration,
+                                    search_length = self.search_length,
+                                    optimizer = self.previous_optimizer,
+                                    final_model = self.updated_c_model,
+                                    previous_model = self.previous_c_model)
+            
+                            # Preserving debug values (if enabled)
+                if self.full_debug:
+                    if iteration == 0:
+                        with open(os.path.join(self.full_debug_path, 'col_values_debug_lsaa.csv'), 'a+', newline='') as csv_file:
+                            field_names = ['coalition', 'value', 'iteration']
+                            csv_writer = csv.writer(csv_file)
+                            csv_writer.writerow(field_names)
+                            for col, value in debug_values.items():
+                                csv_writer.writerow([col, value, iteration])
+                    else:
+                        with open(os.path.join(self.full_debug_path, 'col_values_debug_lsaa.csv'), 'a+', newline='') as csv_file:
+                            csv_writer = csv.writer(csv_file)
+                            for col, value in debug_values.items():
+                                csv_writer.writerow([col, value, iteration])
+
 
     def finalize_tracking(self,
                           path: str = None):
@@ -308,6 +366,11 @@ class Evaluation_Manager():
             partial_shap, shap = self.samplesh_evaluator.calculate_final_shap()
             results['partial']['partial_shap'] = partial_shap
             results['full']['shap'] = shap
+        
+        if self.lsaa_evaluator:
+            partial_lsaa, lsaa = self.lsaa_evaluator.calculate_final_lsaa()
+            results['partial']['partial_lsaa'] = partial_lsaa
+            results['full']['lsaa'] = lsaa
         
         if self.preserve_partial_results == True:
             for metric, values in results['partial'].items():

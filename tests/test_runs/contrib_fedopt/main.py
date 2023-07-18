@@ -7,10 +7,10 @@ import os
 def main():
     config = {
         "orchestrator": {
-            "iterations": 400,
+            "iterations": 10,
             "number_of_nodes": 10,
             "local_warm_start": False,
-            "sample_size": 10,
+            "sample_size": 5,
             'enable_archiver': True,
             'enable_optimizer': True,
             "enable_evaluator": True,
@@ -35,7 +35,9 @@ def main():
                     "LOO_OR":  False,
                     "Shapley_OR": False,
                     "IN_SAMPLE_LOO": True,
-                    "IN_SAMPLE_SHAP": True,
+                    "IN_SAMPLE_SHAP": False,
+                    "LSAA": True,
+                    "line_search_length": 4,
                     "preserve_evaluation": {
                         "preserve_partial_results": True,
                         "preserve_final_results": True},

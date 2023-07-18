@@ -92,7 +92,8 @@ class Sample_Evaluator():
                    optimizer: Optimizers,
                    iteration: int,
                    final_model: FederatedModel,
-                   previous_model: FederatedModel):
+                   previous_model: FederatedModel,
+                   return_coalitions: bool = True):
         """Method used to track_results after each training round.
         Given the graidnets, ids of the nodes included in sample,
         last version of the optimizer, previous version of the model
@@ -118,8 +119,12 @@ class Sample_Evaluator():
         None
         """
 
+        recorded_values = {}
+
         # Evaluating the performance of the final model.
         final_model_score = final_model.evaluate_model()[1]
+        
+        recorded_values[tuple(gradients.keys())] = final_model_score
         
         for node in nodes_in_sample:
             node_id = node.node_id
@@ -138,6 +143,11 @@ class Sample_Evaluator():
             marginal_model.update_weights(marginal_weights)
             marginal_model_score = marginal_model.evaluate_model()[1]
             self.partial_psi[iteration][node_id] = final_model_score - marginal_model_score
+            
+            recorded_values[tuple(marginal_gradients.keys())] = marginal_model_score
+            
+        if return_coalitions == True:
+            return recorded_values
 
 
     def calculate_final_psi(self) -> tuple[dict[int: dict], dict[int: float]]:

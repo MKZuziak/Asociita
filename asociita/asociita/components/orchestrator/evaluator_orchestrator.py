@@ -26,7 +26,7 @@ class Evaluator_Orchestrator(Orchestrator):
         is able to assess clients marginal contribution with the help of Evaluation Manager."""
     
     
-    def __init__(self, settings: Settings) -> None:
+    def __init__(self, settings: Settings, **kwargs) -> None:
         """Orchestrator is initialized by passing an instance
         of the Settings object. Settings object contains all the relevant configurational
         settings that an instance of the Orchestrator object may need to complete the simulation.
@@ -44,7 +44,7 @@ class Evaluator_Orchestrator(Orchestrator):
        -------
        None
         """
-        super().__init__(settings)
+        super().__init__(settings, kwargs=kwargs)
     
 
     def train_protocol(self,
