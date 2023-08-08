@@ -78,6 +78,12 @@ class LSAA():
             # Deleting gradients of node i from the sample.
             marginal_gradients = copy.deepcopy(gradients)
             del marginal_gradients[node_id] 
+
+            # Creating copies for the appended version
+            appended_gradients = copy.deepcopy(marginal_gradients)
+            appended_model = copy.deepcopy(previous_model)
+            appended_optimizer = copy.deepcopy(optimizer)
+
             # Cloning the last optimizer
             marginal_optim = copy.deepcopy(optimizer)
 
@@ -90,24 +96,20 @@ class LSAA():
             marginal_model_score = marginal_model.quick_evaluate()[1]
 
             recorded_values[tuple(marginal_gradients.keys())] = marginal_model_score
-
-            appended_gradients = copy.deepcopy(marginal_gradients)
-            for phi in range(search_length):
-                clean_optim = copy.deepcopy(optimizer)
-                clean_model = copy.deepcopy(previous_model)
-
-                appended_gradients[f"{phi}_dummy_of_{node_id}"] = copy.deepcopy(gradients[node_id])
-                appended_grad_avg = Aggregators.compute_average(appended_gradients)
-                appended_wieghts = clean_optim.fed_optimize(weights=clean_model.get_weights(),
-                                                            delta = appended_grad_avg)
-                clean_model.update_weights(appended_wieghts)
-
-                clean_model_score = clean_model.quick_evaluate()[1]
-                lsaa_score += clean_model_score - marginal_model_score
-
-                recorded_values[tuple(appended_gradients.keys())] = clean_model_score
             
-            self.partial_lsaa[iteration][node_id] = lsaa_score / search_length
+            for phi in range(search_length):
+                appended_gradients[(f"{phi + 1}_of_{node_id}")] = copy.deepcopy(gradients[node_id])
+                # TODO: Change f"{phi + 1}_dummy_of_{node_id}" after debugging
+            
+            appended_grad_avg = Aggregators.compute_average(appended_gradients)
+            appended_weights = appended_optimizer.fed_optimize(weights=appended_model.get_weights(),
+                                                            delta = appended_grad_avg)
+            appended_model.update_weights(appended_weights)
+            appended_model_score = appended_model.quick_evaluate()[1]
+            lsaa_score = appended_model_score - marginal_model_score
+            recorded_values[tuple(appended_gradients.keys())] = appended_model_score
+            
+            self.partial_lsaa[iteration][node_id] = lsaa_score # Previously: lsaa_score / search_length
        
         if return_coalitions == True:
                 return recorded_values

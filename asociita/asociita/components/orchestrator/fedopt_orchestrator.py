@@ -70,11 +70,11 @@ class Fedopt_Orchestrator(Orchestrator):
             Returns 0 on the successful completion of the training.
         """
         # Initializing all the attributes using an instance of the Settings object.
-        iterations = self.settings.iterations
-        nodes_number = self.settings.number_of_nodes
+        iterations = self.settings.iterations # Int, number of iteraions
+        nodes_number = self.settings.number_of_nodes # Int, number of nodes
         local_warm_start = self.settings.local_warm_start # Note: not implemented yet.
-        nodes = [node for node in range(nodes_number)]
-        sample_size = self.settings.sample_size
+        nodes = [node for node in range(nodes_number)] # list of int, individual ids
+        sample_size = self.settings.sample_size # int, size of the sample
         
         # Initializing an instance of the Archiver class if enabled in the settings.
         if self.settings.enable_archiver == True:

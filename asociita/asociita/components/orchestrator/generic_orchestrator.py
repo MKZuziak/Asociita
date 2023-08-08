@@ -186,11 +186,11 @@ class Orchestrator():
             Returns 0 on the successful completion of the training."""
         
         # Initializing all the attributes using an instance of the Settings object.
-        iterations = self.settings.iterations
-        nodes_number = self.settings.number_of_nodes
+        iterations = self.settings.iterations # Iterations: int
+        nodes_number = self.settings.number_of_nodes # Number of nodes: int
         local_warm_start = self.settings.local_warm_start # Note: not implemeneted yet.
-        nodes = [node for node in range(nodes_number)]
-        sample_size = self.settings.sample_size
+        nodes = [node for node in range(nodes_number)] # List containing int
+        sample_size = self.settings.sample_size # Sample size: int
         
         # Initializing an instance of the Archiver class if enabled in the settings.
         if self.settings.enable_archiver == True:
@@ -201,7 +201,6 @@ class Orchestrator():
         # Creating (empty) federated nodes.
         nodes_green = create_nodes(nodes, 
                                    self.settings.nodes_settings)
-
 
         # Creating a list of models for the nodes.
         model_list = self.model_initialization(nodes_number=nodes_number,

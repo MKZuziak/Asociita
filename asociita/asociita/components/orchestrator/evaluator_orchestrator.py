@@ -71,11 +71,11 @@ class Evaluator_Orchestrator(Orchestrator):
             """
         
         # Initializing all the attributes using an instance of the Settings object.
-        iterations = self.settings.iterations
-        nodes_number = self.settings.number_of_nodes
+        iterations = self.settings.iterations # Int, number of iterations
+        nodes_number = self.settings.number_of_nodes # Int, number of nodes
         local_warm_start = self.settings.local_warm_start
-        nodes = [node for node in range(nodes_number)]
-        sample_size = self.settings.sample_size
+        nodes = [node for node in range(nodes_number)] # List of ints, list of nodes ids
+        sample_size = self.settings.sample_size # Int, size of the sample
         
         # Initializing an instance of the Archiver class if enabled in the settings.
         if self.settings.enable_archiver == True:
@@ -131,21 +131,20 @@ class Evaluator_Orchestrator(Orchestrator):
                         node_id, model_gradients = result.get()
                         gradients[node_id] = copy.deepcopy(model_gradients)
             
+            grad_copy = copy.deepcopy(gradients) #TODO DEBUG DEBUG
             # Computing the average
             grad_avg = Aggregators.compute_average(gradients) # AGGREGATING FUNCTION -> CHANGE IF NEEDED
             # Upadting the weights using gradients and momentum
             updated_weights = Optim.fed_optimize(weights=self.central_model.get_weights(),
                                                     delta=grad_avg)
-            # Evaluation step: preserving the updated central model
-            evaluation_manager.preserve_updated_model(updated_model = self.central_model)
-
-            # Evaluation step: calculating all the marginal contributions
-            evaluation_manager.track_results(gradients = gradients,
-                                             nodes_in_sample = sampled_nodes,
-                                             iteration = iteration)
-            
             # Updating the orchestrator
             self.central_model.update_weights(updated_weights)
+            # Evaluation step: preserving the updated central model
+            evaluation_manager.preserve_updated_model(updated_model = self.central_model)
+            # Evaluation step: calculating all the marginal contributions
+            evaluation_manager.track_results(gradients = grad_copy,
+                                             nodes_in_sample = sampled_nodes,
+                                             iteration = iteration)
             # Updating the nodes
             for node in nodes_green:
                 node.model.update_weights(updated_weights)         

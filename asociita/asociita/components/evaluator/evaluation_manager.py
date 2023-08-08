@@ -164,7 +164,7 @@ class Evaluation_Manager():
             self.multip = True
             self.number_of_workers = settings['number_of_workers']
     
-
+    
     def preserve_previous_model(self,
                                 previous_model: FederatedModel):
         """Preserves the model from the previous round by copying 
