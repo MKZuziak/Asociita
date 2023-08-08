@@ -48,25 +48,23 @@ def main():
             "batch_size": 32,
             "learning_rate": 0.001}
     }}
-    # data_config = {
-    # "dataset_name" : "mnist",
-    # "split_type" : "homogeneous",
-    # "shards": 3,
-    # "local_test_size": 0.2,
-    # "transformations": {1: {"transformation_type":"noise", "noise_multiplyer": 0.9}},
-    # "imbalanced_clients": {},
-    # "save_dataset": True,
-    # "save_transformations": True,
-    # "save_blueprint": True,
-    # "agents": 3,
-    # "save_path": os.getcwd()}
+    data_config = {
+    "dataset_name" : "mnist",
+    "split_type" : "homogeneous",
+    "shards": 3,
+    "local_test_size": 0.2,
+    "transformations": {1: {"transformation_type":"noise", "noise_multiplyer": 0.9}},
+    "imbalanced_clients": {},
+    "save_dataset": True,
+    "save_transformations": True,
+    "save_blueprint": True,
+    "agents": 3,
+    "save_path": os.getcwd()}
     settings = init_settings(orchestrator_type='evaluator',
                              allow_default=True,
                              initialization_method='dict',
                              dict_settings=config)
-    # data = load_data(data_config)
-    with open(r"MNIST_3_dataset", "rb") as file:
-        data = pickle.load(file)
+    data = load_data(data_config)
     # DATA: Selecting data for the orchestrator
     orchestrator_data = data[0]
     # DATA: Selecting data for nodes

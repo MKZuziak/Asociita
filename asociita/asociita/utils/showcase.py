@@ -20,7 +20,7 @@ def show_random(imgs_orig, imgs_transformed):
     plt.show()
 
 
-def save_random(imgs_orig, imgs_transformed, transformation: str):
+def save_random(imgs_orig, imgs_transformed, transformation: str, name: str):
     fig, ax = plt.subplots(2, 5)
     for position in range(5):
         random_pos = random.randint(0, len(imgs_orig) - 1)
@@ -28,6 +28,6 @@ def save_random(imgs_orig, imgs_transformed, transformation: str):
         transformed_img = np.asarray(imgs_transformed[random_pos])
         ax[0][position].imshow(original_img)
         ax[1][position].imshow(transformed_img)
-    title = transformation + '.pdf'
+    title = transformation + '_' + name + '.pdf'
     plt.savefig(title)
 

@@ -32,7 +32,10 @@ class Shard_Splits:
                     original_imgs = copy.deepcopy(agent_data['image'])
                 agent_data = Shard_Transformation.transform(agent_data, preferences=settings['transformations'][shard]) # CALL SHARD_TRANSFORMATION CLASS
                 if settings['save_transformations']:
-                    save_random(original_imgs, agent_data['image'], settings['transformations'][shard]["transformation_type"])
+                    save_random(original_imgs, 
+                                agent_data['image'], 
+                                settings['transformations'][shard]["transformation_type"],
+                                name = f"of_node_{shard}")
 
             # In-shard split between test and train data.
             agent_data = agent_data.train_test_split(test_size=settings["local_test_size"])
